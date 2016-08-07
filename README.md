@@ -4,3 +4,5 @@
 # Feign `ErrorDecoder`
 
 Readme incoming!
+
+Blog post explaining the project : http://source.coveo.com/2016/02/19/microservices-and-exception-handling/
