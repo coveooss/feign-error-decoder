@@ -11,6 +11,20 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
    </properties>
 
+   <licenses>
+      <license>
+         <name>MIT</name>
+         <url>https://opensource.org/licenses/MIT</url>
+      </license>
+   </licenses>
+   
+   
+  <scm>
+    <connection>scm:git:git@github.com:coveo/feign-error-decoder.git</connection>
+    <developerConnection>scm:git:git@github.com:coveo/feign-error-decoder.git</developerConnection>
+    <url>http://github.com/coveo/feign-error-decoder</url>
+  </scm>
+
    <dependencies>
       <dependency>
          <groupId>io.github.openfeign</groupId>
