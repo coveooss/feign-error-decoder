@@ -9,6 +9,8 @@
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <maven.compiler.source>1.8</maven.compiler.source>
+      <maven.compiler.target>1.8</maven.compiler.target>
    </properties>
 
    <licenses>
@@ -17,13 +19,20 @@
          <url>https://opensource.org/licenses/MIT</url>
       </license>
    </licenses>
-   
-   
-  <scm>
-    <connection>scm:git:git@github.com:coveo/feign-error-decoder.git</connection>
-    <developerConnection>scm:git:git@github.com:coveo/feign-error-decoder.git</developerConnection>
-    <url>http://github.com/coveo/feign-error-decoder</url>
-  </scm>
+
+   <developers>
+      <developer>
+         <name>Jacques-Etienne Beaudet</name>
+         <organization>Coveo</organization>
+         <organizationUrl>http://github.com/coveo</organizationUrl>
+      </developer>
+   </developers>
+
+   <scm>
+      <connection>scm:git:git@github.com:coveo/feign-error-decoder.git</connection>
+      <developerConnection>scm:git:git@github.com:coveo/feign-error-decoder.git</developerConnection>
+      <url>http://github.com/coveo/feign-error-decoder</url>
+   </scm>
 
    <dependencies>
       <dependency>
@@ -76,6 +85,35 @@
 
    <build>
       <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.0.0</version>
+            <configuration>
+            </configuration>
+            <executions>
+               <execution>
+                  <id>attach-sources</id>
+                  <goals>
+                     <goal>jar</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>com.coveo</groupId>
+            <artifactId>fmt-maven-plugin</artifactId>
+            <version>1.0.0</version>
+            <executions>
+               <execution>
+                  <id>format-code</id>
+                  <phase>verify</phase>
+                  <goals>
+                     <goal>format</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
