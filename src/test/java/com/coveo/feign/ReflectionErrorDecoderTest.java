@@ -296,7 +296,8 @@ public class ReflectionErrorDecoderTest {
     private static final long serialVersionUID = 1L;
     public static final String ERROR_CODE = "INVALID_INPUT";
 
-    public ExceptionWithInvalidConstructorException(Throwable e, String useless) {
+    public ExceptionWithInvalidConstructorException(
+        Integer uselessInt, Throwable e, String useless) {
       super(ERROR_CODE, e);
     }
   }

@@ -78,5 +78,8 @@ To enable this, all you need to do is have Spring framework available in your pr
 ## Custom `Decoder`
 By default, this project will use the `JacksonDecoder` implementation of Feign `Decoder` interface. To change it, simply use setter to set your own `Decoder`.
 
+## Supported constructor arguments
+The library has a default list of supported argument types for the exception constructors. It supports empty and constructors with any number of `String` or `Throwable` in any order. To extend supported exception types, just override the method `protected List<Object> getSupportedConstructorArgumentInstances()`. Just make sure to return the default types of `String` and `Throwable` if you still want them to be supported.
+
 # Contributing
 PR are always welcome and please open an issue if you find any bugs or wish to request an additional feature. 

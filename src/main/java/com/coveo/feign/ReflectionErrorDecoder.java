@@ -6,8 +6,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,8 +29,10 @@ import feign.jackson.JacksonDecoder;
 @SuppressWarnings("unchecked")
 public abstract class ReflectionErrorDecoder<T, S extends Exception> implements ErrorDecoder {
   private static final Logger logger = LoggerFactory.getLogger(ReflectionErrorDecoder.class);
-  private static Field detailMessageField;
+  private static final List<Object> SUPPORTED_CONSTRUCTOR_ARGUMENTS =
+      Arrays.asList(new String(), new Throwable());
 
+  private static Field detailMessageField;
   private static boolean isSpringFrameworkAvailable = isSpringFrameworkAvailable();
 
   private Class<?> apiClass;
@@ -181,35 +186,35 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
                 clazz.getName(),
                 existingExceptionDetails.getClazz().getName()));
       }
-    } else {
-      logger.warn(
-          "Couldn't instantiate the exception '{}' for the interface '{}', it needs an empty or String only "
-              + "or 2 Strings or 1 String and 1 Throwable or 1 Throwable *public* constructor.",
-          clazz.getName(),
-          apiClass.getName());
     }
   }
 
   protected ExceptionSupplier<S> getExceptionSupplierFromExceptionClass(Class<? extends S> clazz) {
+    List<Object> supportedArguments = getSupportedConstructorArgumentInstances();
     for (Constructor<?> constructor : clazz.getConstructors()) {
       Class<?>[] parameters = constructor.getParameterTypes();
-      if (parameters.length == 0) {
-        return () -> (S) constructor.newInstance();
-      } else if (parameters.length == 1 && parameters[0].isAssignableFrom(String.class)) {
-        return () -> (S) constructor.newInstance(new String());
-      } else if (parameters.length == 2
-          && parameters[0].isAssignableFrom(String.class)
-          && parameters[1].isAssignableFrom(String.class)) {
-        return () -> (S) constructor.newInstance(new String(), new String());
-      } else if (parameters.length == 2
-          && parameters[0].isAssignableFrom(String.class)
-          && parameters[1].isAssignableFrom(Throwable.class)) {
-        return () -> (S) constructor.newInstance(new String(), new Throwable());
-      } else if (parameters.length == 1 && parameters[0].isAssignableFrom(Throwable.class)) {
-        return () -> (S) constructor.newInstance(new Throwable());
+      List<Object> arguments = new ArrayList<>();
+      for (Class<?> parameter : parameters) {
+        supportedArguments
+            .stream()
+            .filter(argumentInstance -> parameter.isAssignableFrom(argumentInstance.getClass()))
+            .findFirst()
+            .ifPresent(argumentInstance -> arguments.add(argumentInstance));
+      }
+      if (arguments.size() == parameters.length) {
+        return () -> (S) constructor.newInstance(arguments.toArray(new Object[0]));
       }
     }
+    logger.warn(
+        "Couldn't instantiate the exception '{}' for the interface '{}'. It needs an empty or "
+            + "a combination of any number of String or Throwable arguments *public* constructor.",
+        clazz.getName(),
+        apiClass.getName());
     return null;
+  }
+
+  protected List<Object> getSupportedConstructorArgumentInstances() {
+    return SUPPORTED_CONSTRUCTOR_ARGUMENTS;
   }
 
   protected abstract Exception getFallbackException(String methodKey, Response response);
