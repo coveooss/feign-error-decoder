@@ -1,19 +1,10 @@
 package com.coveo.feign;
 
-import feign.Response;
-import feign.codec.ErrorDecoder;
-
 public class ServiceExceptionErrorDecoder
     extends ReflectionErrorDecoder<ErrorCodeAndMessage, ServiceException> {
-  private ErrorDecoder fallbackErrorDecoder = new ErrorDecoder.Default();
 
   public ServiceExceptionErrorDecoder(Class<?> apiClass) {
     super(apiClass, ErrorCodeAndMessage.class, ServiceException.class, "com.coveo.feign");
-  }
-
-  @Override
-  protected Exception getFallbackException(String methodKey, Response response) {
-    return fallbackErrorDecoder.decode(methodKey, response);
   }
 
   @Override

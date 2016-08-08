@@ -40,6 +40,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   private Map<String, ThrownExceptionDetails<S>> exceptionsThrown = new HashMap<>();
   private String basePackage;
   private Decoder decoder = new JacksonDecoder();
+  private ErrorDecoder fallbackErrorDecoder = new ErrorDecoder.Default();
 
   public ReflectionErrorDecoder(
       Class<?> apiClass, Class<T> apiResponseClass, Class<S> baseExceptionClass) {
@@ -92,7 +93,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
           apiClass.getName(),
           e);
     }
-    return getFallbackException(methodKey, response);
+    return fallbackErrorDecoder.decode(methodKey, response);
   }
 
   private void processDeclaredThrownExceptions(
@@ -217,8 +218,6 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
     return SUPPORTED_CONSTRUCTOR_ARGUMENTS;
   }
 
-  protected abstract Exception getFallbackException(String methodKey, Response response);
-
   protected abstract String getKeyFromException(S exception);
 
   protected abstract String getKeyFromResponse(T apiResponse);
@@ -227,6 +226,10 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
 
   protected void setDecoder(Decoder decoder) {
     this.decoder = decoder;
+  }
+
+  protected void setFallbackErrorDecoder(ErrorDecoder errorDecoder) {
+    this.fallbackErrorDecoder = errorDecoder;
   }
 
   private static boolean isSpringFrameworkAvailable() {

@@ -41,15 +41,9 @@ import feign.codec.ErrorDecoder;
 
 public class ServiceExceptionErrorDecoder
     extends ReflectionErrorDecoder<ErrorCodeAndMessage, ServiceException> {
-  private ErrorDecoder fallbackErrorDecoder = new ErrorDecoder.Default();
 
   public ServiceExceptionErrorDecoder(Class<?> apiClass) {
     super(apiClass, ErrorCodeAndMessage.class, ServiceException.class);
-  }
-
-  @Override
-  protected Exception getFallbackException(String methodKey, Response response) {
-    return fallbackErrorDecoder.decode(methodKey, response);
   }
 
   @Override
@@ -76,7 +70,10 @@ An optional dependency on [Spring Context](https://github.com/spring-projects/sp
 To enable this, all you need to do is have Spring framework available in your project. By default, it will scan the exception children in all packages. To restrict the base package to be scanned, simply use the constructor with the `basePackage` field.
 
 ## Custom `Decoder`
-By default, this project will use the `JacksonDecoder` implementation of Feign `Decoder` interface. To change it, simply use setter to set your own `Decoder`.
+By default, this project uses the `JacksonDecoder` implementation of Feign `Decoder` interface. A protected setter is available to use your own `Decoder`.
+
+## Custom fallback `ErrorDecoder`
+`ErrorDecoder.Default` is used by default when no exception is found in the scanned exceptions. A protected setter is available to use your own fallback `ErrorDecoder`.
 
 ## Supported constructor arguments
 The library has a default list of supported argument types for the exception constructors. It supports empty and constructors with any number of `String` or `Throwable` in any order. To extend supported exception types, just override the method `protected List<Object> getSupportedConstructorArgumentInstances()`. Just make sure to return the default types of `String` and `Throwable` if you still want them to be supported.
