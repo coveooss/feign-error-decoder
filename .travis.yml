@@ -1,8 +1,8 @@
 language: java
 
-jdk:
+jdk: 
   - oraclejdk8
 
-cache:
+cache: 
   directories:
-- "$HOME/.m2/repository"
+    - "$HOME/.m2/repository"
