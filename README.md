@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/coveo/feign-error-decoder.svg?branch=master)](https://travis-ci.org/coveo/feign-error-decoder)
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/coveo/feign-error-decoder/blob/master/LICENSE)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.coveo/feign-error-decoder/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.coveo/feign-error-decoder)
 
 # [Feign](https://github.com/OpenFeign/feign) Reflection `ErrorDecoder`
 
@@ -8,6 +9,17 @@ This small library implements `ErrorDecoder` to provide a simple way to map a ke
 It's very useful in an application with many microservices calling each others when you want to handle specific checked or runtime exceptions on the client side.
 
 [Blog post](http://source.coveo.com/2016/02/19/microservices-and-exception-handling/) explaining more about the rationale of this library.
+
+# Maven
+Now available on Maven Central : 
+
+```xml
+    <dependency>
+      <groupId>com.coveo</groupId>
+      <artifactId>feign-error-decoder</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+```
 
 # Usage
 A complete exemple is shown in this repo as the base setup for the unit tests.
