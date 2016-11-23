@@ -76,10 +76,12 @@ public class ServiceExceptionErrorDecoder
 ```
 Use the [Feign builder](https://github.com/OpenFeign/feign#customization) to inject the `ErrorDecoder` in your client.
 # Optional customization
-## Abstract exception support with classpath scanning
-An optional dependency on [Spring Context](https://github.com/spring-projects/spring-framework/tree/master/spring-context) is included in the library to allow classpath scanning to fetch the children of abstract exception classes. This allows you to declare a specific base exception as thrown on the client interface and let the library scan all the possible exceptions that can be thrown.
-
-To enable this, all you need to do is have Spring framework available in your project. By default, it will scan the exception children in all packages. To restrict the base package to be scanned, simply use the constructor with the `basePackage` field.
+## Exception inheritance support with classpath scanning
+A `ClassHierarchySupplier` interface is used to support classpath scanning to fetch the hierarchy of abstract exception classes. This allows you to declare a specific base exception as thrown on the client interface and let the interface scan all the possible exceptions that can be thrown.
+### With Spring
+An *optional* dependency on [Spring Context](https://github.com/spring-projects/spring-framework/tree/master/spring-context) is included in the library to enable this. All you need to do is have Spring framework available in your project and the proper implementation will be instantiated. By default, it will scan the exception children in all packages. To restrict the base package to be scanned, simply use the constructor with the `basePackage` field.
+### Without Spring
+A default implementation is not provided at the moment. Feel free to submit a PR if you implement it!
 
 ## Custom `Decoder`
 By default, this project uses the `JacksonDecoder` implementation of Feign `Decoder` interface. A protected setter is available to use your own `Decoder`.

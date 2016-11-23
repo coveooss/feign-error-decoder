@@ -9,16 +9,18 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
-import org.springframework.core.type.filter.AssignableTypeFilter;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.coveo.feign.hierarchy.ClassHierarchySupplier;
+import com.coveo.feign.hierarchy.EmptyClassHierarchySupplier;
+import com.coveo.feign.hierarchy.SpringClassHierarchySupplier;
+import com.coveo.feign.util.ClassUtils;
 
 import feign.RequestLine;
 import feign.Response;
@@ -33,7 +35,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
       Arrays.asList(new String(), new Throwable());
 
   private static Field detailMessageField;
-  private static boolean isSpringFrameworkAvailable = isSpringFrameworkAvailable();
+  private static boolean isSpringWebAvailable = ClassUtils.isSpringWebAvailable();
 
   private Class<?> apiClass;
   private Class<T> apiResponseClass;
@@ -41,6 +43,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   private String basePackage;
   private Decoder decoder = new JacksonDecoder();
   private ErrorDecoder fallbackErrorDecoder = new ErrorDecoder.Default();
+  private ClassHierarchySupplier classHierarchySupplier;
 
   public ReflectionErrorDecoder(
       Class<?> apiClass, Class<T> apiResponseClass, Class<S> baseExceptionClass) {
@@ -52,8 +55,25 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
       Class<T> apiResponseClass,
       Class<S> baseExceptionClass,
       String basePackage) {
+    this(
+        apiClass,
+        apiResponseClass,
+        baseExceptionClass,
+        basePackage,
+        ClassUtils.isSpringFrameworkAvailable()
+            ? new SpringClassHierarchySupplier()
+            : new EmptyClassHierarchySupplier());
+  }
+
+  public ReflectionErrorDecoder(
+      Class<?> apiClass,
+      Class<T> apiResponseClass,
+      Class<S> baseExceptionClass,
+      String basePackage,
+      ClassHierarchySupplier classHierarchySupplier) {
     this.apiClass = apiClass;
     this.apiResponseClass = apiResponseClass;
+    this.classHierarchySupplier = classHierarchySupplier;
     this.basePackage = basePackage;
 
     try {
@@ -61,14 +81,14 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
       detailMessageField.setAccessible(true);
 
       for (Method method : apiClass.getMethods()) {
-        if (method.getAnnotation(RequestLine.class) != null) {
+        if (method.getAnnotation(RequestLine.class) != null
+            || (isSpringWebAvailable && method.getAnnotation(RequestMapping.class) != null)) {
           processDeclaredThrownExceptions(method.getExceptionTypes(), baseExceptionClass);
         }
       }
     } catch (
-        ClassNotFoundException | InstantiationException | IllegalAccessException
-                | IllegalArgumentException | InvocationTargetException | NoSuchFieldException
-                | SecurityException
+        InstantiationException | IllegalAccessException | IllegalArgumentException
+                | InvocationTargetException | NoSuchFieldException | SecurityException
             e) {
       throw new IllegalStateException("FeignApiExceptionErrorDecoder instantiation failed!", e);
     }
@@ -98,19 +118,12 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
 
   private void processDeclaredThrownExceptions(
       Class<?>[] exceptionsClasses, Class<S> baseExceptionClass)
-      throws ClassNotFoundException, InstantiationException, IllegalAccessException,
-          IllegalArgumentException, InvocationTargetException {
+      throws InstantiationException, IllegalAccessException, IllegalArgumentException,
+          InvocationTargetException {
     for (Class<?> clazz : exceptionsClasses) {
       if (baseExceptionClass.isAssignableFrom(clazz)) {
         if (Modifier.isAbstract(clazz.getModifiers())) {
-          if (isSpringFrameworkAvailable) {
-            extractServiceExceptionInfoFromSubClasses(clazz);
-          } else {
-            logger.warn(
-                "Can't extract the class hierarchy from the abstract class '{}'"
-                    + " without Spring Framework.",
-                clazz.getName());
-          }
+          extractExceptionInfoFromSubClasses(clazz);
         } else {
           extractExceptionInfo((Class<? extends S>) clazz);
         }
@@ -133,28 +146,13 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
     return exceptionToBeThrown;
   }
 
-  private void extractServiceExceptionInfoFromSubClasses(Class<?> clazz)
-      throws ClassNotFoundException, InstantiationException, IllegalAccessException,
-          IllegalArgumentException, InvocationTargetException {
-    Set<Class<?>> subClasses = getAllSubClasses(clazz);
+  private void extractExceptionInfoFromSubClasses(Class<?> clazz)
+      throws InstantiationException, IllegalAccessException, IllegalArgumentException,
+          InvocationTargetException {
+    Set<Class<?>> subClasses = classHierarchySupplier.getSubClasses(clazz, basePackage);
     for (Class<?> subClass : subClasses) {
       extractExceptionInfo((Class<? extends S>) subClass);
     }
-  }
-
-  private Set<Class<?>> getAllSubClasses(Class<?> clazz) throws ClassNotFoundException {
-    ClassPathScanningCandidateComponentProvider provider =
-        new ClassPathScanningCandidateComponentProvider(false);
-    provider.addIncludeFilter(new AssignableTypeFilter(clazz));
-
-    Set<BeanDefinition> components = provider.findCandidateComponents(basePackage);
-
-    Set<Class<?>> subClasses = new HashSet<>();
-    for (BeanDefinition component : components) {
-      subClasses.add(Class.forName(component.getBeanClassName()));
-    }
-
-    return subClasses;
   }
 
   private void extractExceptionInfo(Class<? extends S> clazz)
@@ -230,15 +228,5 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
 
   protected void setFallbackErrorDecoder(ErrorDecoder errorDecoder) {
     this.fallbackErrorDecoder = errorDecoder;
-  }
-
-  private static boolean isSpringFrameworkAvailable() {
-    try {
-      Class.forName(
-          "org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider");
-      return true;
-    } catch (ClassNotFoundException e) {
-    }
-    return false;
   }
 }
