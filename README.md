@@ -22,7 +22,7 @@ Now available on Maven Central :
 ```
 
 # Usage
-A complete exemple is shown in this repo as the base setup for the unit tests.
+A complete example is shown in this repo as the base setup for the unit tests.
 ## Requirements
 ### Base Exception class
 In order to use this library, you need a base exception which all the exceptions declared thrown on the client interface will inherit from. This exception needs to provide a way to access a unique `String` key per subclass.
