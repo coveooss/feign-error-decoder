@@ -1,19 +1,22 @@
 package com.coveo.feign;
 
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -21,10 +24,39 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import feign.RequestLine;
 import feign.Response;
+import feign.codec.ErrorDecoder;
 
+@SuppressWarnings({"resource", "unused"})
 @RunWith(MockitoJUnitRunner.class)
 public class ReflectionErrorDecoderTest {
   private static final String DUMMY_MESSAGE = "dummy message";
+
+  @Mock private ErrorDecoder errorDecoderMock;
+
+  @Test
+  public void testFallbackOnUnknownException() throws Exception {
+    ReflectionErrorDecoder<ErrorCodeAndMessage, ServiceException> errorDecoder =
+        new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class, errorDecoderMock);
+    Response response = getResponseWithErrorCode(UUID.randomUUID().toString(), DUMMY_MESSAGE);
+
+    errorDecoder.decode("", response);
+
+    verify(errorDecoderMock).decode(eq(""), Mockito.any(Response.class));
+  }
+
+  @Test
+  public void testResponseIsBufferedOnFallback() throws Exception {
+    ReflectionErrorDecoder<ErrorCodeAndMessage, ServiceException> errorDecoder =
+        new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class, errorDecoderMock);
+    Response response = getResponseWithErrorCode(UUID.randomUUID().toString(), DUMMY_MESSAGE);
+
+    errorDecoder.decode("", response);
+
+    ArgumentCaptor<Response> responseCaptor = ArgumentCaptor.forClass(Response.class);
+    verify(errorDecoderMock).decode(eq(""), responseCaptor.capture());
+
+    assertThat(responseCaptor.getValue().body(), not(response.body()));
+  }
 
   @Test
   public void testWithPlainExceptions() throws Exception {
@@ -84,8 +116,7 @@ public class ReflectionErrorDecoderTest {
     ServiceExceptionErrorDecoder errorDecoder =
         new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
     Response response =
-        getResponseWithRestExceptionWithErrorCode(
-            ExceptionWithEmptyConstructorException.ERROR_CODE, DUMMY_MESSAGE);
+        getResponseWithErrorCode(ExceptionWithEmptyConstructorException.ERROR_CODE, DUMMY_MESSAGE);
 
     Exception exception = errorDecoder.decode("", response);
 
@@ -102,8 +133,7 @@ public class ReflectionErrorDecoderTest {
     assertThat(originalException.getMessage(), is(not(DUMMY_MESSAGE)));
 
     Response response =
-        getResponseWithRestExceptionWithErrorCode(
-            ExceptionHardcodingDetailMessage.ERROR_CODE, DUMMY_MESSAGE);
+        getResponseWithErrorCode(ExceptionHardcodingDetailMessage.ERROR_CODE, DUMMY_MESSAGE);
 
     Exception exception = errorDecoder.decode("", response);
 
@@ -116,8 +146,7 @@ public class ReflectionErrorDecoderTest {
     ServiceExceptionErrorDecoder errorDecoder =
         new ServiceExceptionErrorDecoder(TestApiClassWithInheritedExceptions.class);
     Response response =
-        getResponseWithRestExceptionWithErrorCode(
-            ConcreteServiceException.ERROR_CODE, DUMMY_MESSAGE);
+        getResponseWithErrorCode(ConcreteServiceException.ERROR_CODE, DUMMY_MESSAGE);
 
     Exception exception = errorDecoder.decode("", response);
 
@@ -130,8 +159,7 @@ public class ReflectionErrorDecoderTest {
     ServiceExceptionErrorDecoder errorDecoder =
         new ServiceExceptionErrorDecoder(TestApiClassWithInheritedExceptions.class);
     Response response =
-        getResponseWithRestExceptionWithErrorCode(
-            ConcreteSubServiceException.ERROR_CODE, DUMMY_MESSAGE);
+        getResponseWithErrorCode(ConcreteSubServiceException.ERROR_CODE, DUMMY_MESSAGE);
 
     Exception exception = errorDecoder.decode("", response);
 
@@ -149,11 +177,11 @@ public class ReflectionErrorDecoderTest {
     new ServiceExceptionErrorDecoder(TestApiClassWithNoErrorCodeServiceException.class);
   }
 
-  private Response getResponseWithRestExceptionWithErrorCode(String errorCode, String message)
+  private Response getResponseWithErrorCode(String errorCode, String message)
       throws JsonProcessingException {
     ObjectMapper objectMapper = new ObjectMapper();
     return Response.create(
-        412,
+        400,
         "",
         new HashMap<String, Collection<String>>(),
         objectMapper.writeValueAsString(

@@ -24,6 +24,7 @@ import com.coveo.feign.util.ClassUtils;
 
 import feign.RequestLine;
 import feign.Response;
+import feign.Util;
 import feign.codec.Decoder;
 import feign.codec.ErrorDecoder;
 import feign.jackson.JacksonDecoder;
@@ -94,26 +95,33 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
     }
   }
 
+  //The copied response will be closed in SynchronousMethodHandler and the actual is closed in Util.toByteArray
+  @SuppressWarnings("resource")
   @Override
   public Exception decode(String methodKey, Response response) {
-    T apiResponse = null;
-    try {
-      apiResponse = (T) decoder.decode(response, apiResponseClass);
-      if (apiResponse != null && exceptionsThrown.containsKey(getKeyFromResponse(apiResponse))) {
-        return getExceptionByReflection(apiResponse);
+    Response responseCopy = response;
+    if (response.body() != null) {
+      try {
+        byte[] bodyData = Util.toByteArray(response.body().asInputStream());
+        responseCopy =
+            Response.create(response.status(), response.reason(), response.headers(), bodyData);
+        T apiResponse = (T) decoder.decode(responseCopy, apiResponseClass);
+        if (apiResponse != null && exceptionsThrown.containsKey(getKeyFromResponse(apiResponse))) {
+          return getExceptionByReflection(apiResponse);
+        }
+      } catch (IOException e) {
+        // Fail silently as a new exception will be thrown in super
+      } catch (
+          IllegalAccessException | IllegalArgumentException | InstantiationException
+                  | InvocationTargetException
+              e) {
+        logger.error(
+            "Error instantiating the exception declared thrown for the interface '{}'",
+            apiClass.getName(),
+            e);
       }
-    } catch (IOException e) {
-      // Fail silently as a new exception will be thrown in super
-    } catch (
-        IllegalAccessException | IllegalArgumentException | InstantiationException
-                | InvocationTargetException
-            e) {
-      logger.error(
-          "Error instantiating the exception declared thrown for the interface '{}'",
-          apiClass.getName(),
-          e);
     }
-    return fallbackErrorDecoder.decode(methodKey, response);
+    return fallbackErrorDecoder.decode(methodKey, responseCopy);
   }
 
   private void processDeclaredThrownExceptions(
