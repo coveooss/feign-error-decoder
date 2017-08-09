@@ -1,5 +1,19 @@
 package com.coveo.feign;
 
+import com.coveo.feign.hierarchy.ClassHierarchySupplier;
+import com.coveo.feign.hierarchy.EmptyClassHierarchySupplier;
+import com.coveo.feign.hierarchy.SpringClassHierarchySupplier;
+import com.coveo.feign.util.ClassUtils;
+import feign.RequestLine;
+import feign.Response;
+import feign.Util;
+import feign.codec.Decoder;
+import feign.codec.ErrorDecoder;
+import feign.jackson.JacksonDecoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.RequestMapping;
+
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -12,22 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import com.coveo.feign.hierarchy.ClassHierarchySupplier;
-import com.coveo.feign.hierarchy.EmptyClassHierarchySupplier;
-import com.coveo.feign.hierarchy.SpringClassHierarchySupplier;
-import com.coveo.feign.util.ClassUtils;
-
-import feign.RequestLine;
-import feign.Response;
-import feign.Util;
-import feign.codec.Decoder;
-import feign.codec.ErrorDecoder;
-import feign.jackson.JacksonDecoder;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unchecked")
 public abstract class ReflectionErrorDecoder<T, S extends Exception> implements ErrorDecoder {
@@ -83,7 +82,9 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
 
       for (Method method : apiClass.getMethods()) {
         if (method.getAnnotation(RequestLine.class) != null
-            || (isSpringWebAvailable && method.getAnnotation(RequestMapping.class) != null)) {
+            || (isSpringWebAvailable && method.getAnnotation(RequestMapping.class) != null)
+            || Stream.of(method.getAnnotations())
+                .anyMatch(a -> a.annotationType().getAnnotation(RequestMapping.class) != null)) {
           processDeclaredThrownExceptions(method.getExceptionTypes(), baseExceptionClass);
         }
       }
