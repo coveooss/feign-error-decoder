@@ -1,9 +1,18 @@
 package com.coveo.feign;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.RequestLine;
+import feign.Response;
+import feign.codec.ErrorDecoder;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
@@ -12,19 +21,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import feign.RequestLine;
-import feign.Response;
-import feign.codec.ErrorDecoder;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
 
 @SuppressWarnings({"resource", "unused"})
 @RunWith(MockitoJUnitRunner.class)
@@ -247,6 +250,14 @@ public class ReflectionErrorDecoderTest {
     @RequestLine("")
     void anotherMethodWithStringAndThrowableConstructorException()
         throws ExceptionWithStringAndThrowableConstructorException;
+
+    @RequestMapping("")
+    void methodWithRequestMappingAndStringConstructorException()
+        throws ExceptionWithStringConstructorException;
+
+    @GetMapping("")
+    void methodWithGetMappingAndStringConstructorException()
+        throws ExceptionWithStringConstructorException;
   }
 
   private static interface TestApiClassWithInheritedExceptions {

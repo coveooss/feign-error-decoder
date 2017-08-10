@@ -82,9 +82,10 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
 
       for (Method method : apiClass.getMethods()) {
         if (method.getAnnotation(RequestLine.class) != null
-            || (isSpringWebAvailable && method.getAnnotation(RequestMapping.class) != null)
-            || Stream.of(method.getAnnotations())
-                .anyMatch(a -> a.annotationType().getAnnotation(RequestMapping.class) != null)) {
+            || (isSpringWebAvailable
+                && Stream.of(method.getAnnotations())
+                    .anyMatch(
+                        a -> a.annotationType().getAnnotation(RequestMapping.class) != null))) {
           processDeclaredThrownExceptions(method.getExceptionTypes(), baseExceptionClass);
         }
       }
