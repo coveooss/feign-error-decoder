@@ -11,13 +11,13 @@ It's very useful in an application with many microservices calling each others w
 [Blog post](http://source.coveo.com/2016/02/19/microservices-and-exception-handling/) explaining more about the rationale of this library.
 
 # Maven
-Now available on Maven Central : 
+The plugin is available on Maven Central : 
 
 ```xml
     <dependency>
       <groupId>com.coveo</groupId>
       <artifactId>feign-error-decoder</artifactId>
-      <version>1.1.1</version>
+      <version>1.2.0</version>
     </dependency>
 ```
 
@@ -75,6 +75,9 @@ public class ServiceExceptionErrorDecoder
 }
 ```
 Use the [Feign builder](https://github.com/OpenFeign/feign#customization) to inject the `ErrorDecoder` in your client.
+
+## Supported interface annotations
+The supported annotations on the interfaces are Feign's `@RequestLine` and Spring `@RequestMapping`. As of version 1.2.0, it also supports `@GetMapping`, `@PostMapping`, `@PutMapping`, `@DeleteMapping` and `@PatchMapping`.
 # Optional customization
 ## Exception inheritance support with classpath scanning
 A `ClassHierarchySupplier` interface is used to support classpath scanning to fetch the hierarchy of abstract exception classes. This allows you to declare a specific base exception as thrown on the client interface and let the interface scan all the possible exceptions that can be thrown.
