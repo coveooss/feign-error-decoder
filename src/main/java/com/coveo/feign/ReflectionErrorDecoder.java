@@ -1,6 +1,7 @@
 package com.coveo.feign;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -84,10 +85,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
 
       for (Method method : apiClass.getMethods()) {
         if (method.getAnnotation(RequestLine.class) != null
-            || (isSpringWebAvailable
-                && Stream.of(method.getAnnotations())
-                    .anyMatch(
-                        a -> a.annotationType().getAnnotation(RequestMapping.class) != null))) {
+            || (isSpringWebAvailable && isMethodAnnotedWithAMappingAnnotation(method))) {
           processDeclaredThrownExceptions(method.getExceptionTypes(), baseExceptionClass);
         }
       }
@@ -198,6 +196,16 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
                 existingExceptionDetails.getClazz().getName()));
       }
     }
+  }
+
+  private boolean isMethodAnnotedWithAMappingAnnotation(Method method) {
+    return Stream.of(method.getAnnotations())
+        .anyMatch(
+            annotation -> {
+              Class<? extends Annotation> clazz = annotation.annotationType();
+              return clazz.getAnnotation(RequestMapping.class) != null
+                  || clazz.equals(RequestMapping.class);
+            });
   }
 
   protected ExceptionSupplier<S> getExceptionSupplierFromExceptionClass(Class<? extends S> clazz) {

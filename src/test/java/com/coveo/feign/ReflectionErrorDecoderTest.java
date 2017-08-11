@@ -18,7 +18,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,6 +36,16 @@ import feign.codec.ErrorDecoder;
 @RunWith(MockitoJUnitRunner.class)
 public class ReflectionErrorDecoderTest {
   private static final String DUMMY_MESSAGE = "dummy message";
+  private static final Field EXCEPTION_THROWN_FIELD;
+
+  static {
+    try {
+      EXCEPTION_THROWN_FIELD = ReflectionErrorDecoder.class.getDeclaredField("exceptionsThrown");
+      EXCEPTION_THROWN_FIELD.setAccessible(true);
+    } catch (NoSuchFieldException | SecurityException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
   @Mock private ErrorDecoder errorDecoderMock;
 
@@ -66,6 +80,22 @@ public class ReflectionErrorDecoderTest {
         getExceptionsThrownMapFromErrorDecoder(TestApiClassWithPlainExceptions.class);
 
     assertThat(exceptionsThrown.size(), is(5));
+    assertTrue(exceptionsThrown.containsKey(ExceptionWithEmptyConstructorException.ERROR_CODE));
+    assertTrue(exceptionsThrown.containsKey(ExceptionWithStringConstructorException.ERROR_CODE));
+    assertTrue(
+        exceptionsThrown.containsKey(ExceptionWithTwoStringsConstructorException.ERROR_CODE));
+    assertTrue(exceptionsThrown.containsKey(ExceptionWithThrowableConstructorException.ERROR_CODE));
+    assertTrue(
+        exceptionsThrown.containsKey(
+            ExceptionWithStringAndThrowableConstructorException.ERROR_CODE));
+  }
+
+  @Test
+  public void testWithSpringAnnotations() throws Exception {
+    Map<String, ThrownExceptionDetails<ServiceException>> exceptionsThrown =
+        getExceptionsThrownMapFromErrorDecoder(TestApiClassWithSpringAnnotations.class);
+
+    assertThat(exceptionsThrown.size(), is(6));
     assertTrue(exceptionsThrown.containsKey(ExceptionWithEmptyConstructorException.ERROR_CODE));
     assertTrue(exceptionsThrown.containsKey(ExceptionWithStringConstructorException.ERROR_CODE));
     assertTrue(
@@ -196,10 +226,8 @@ public class ReflectionErrorDecoderTest {
       getExceptionsThrownMapFromErrorDecoder(Class<?> apiInterface) throws Exception {
     ReflectionErrorDecoder<ErrorCodeAndMessage, ServiceException> errorDecoder =
         new ServiceExceptionErrorDecoder(apiInterface);
-    Field exceptionsThrownField = ReflectionErrorDecoder.class.getDeclaredField("exceptionsThrown");
-    exceptionsThrownField.setAccessible(true);
     return (Map<String, ThrownExceptionDetails<ServiceException>>)
-        exceptionsThrownField.get(errorDecoder);
+        EXCEPTION_THROWN_FIELD.get(errorDecoder);
   }
 
   // Test classes
@@ -257,6 +285,27 @@ public class ReflectionErrorDecoderTest {
     @GetMapping("")
     void methodWithGetMappingAndStringConstructorException()
         throws ExceptionWithStringConstructorException;
+  }
+
+  private static interface TestApiClassWithSpringAnnotations {
+    @RequestMapping("")
+    void methodWithRequestMappingAnnotation()
+        throws ExceptionWithStringAndThrowableConstructorException;
+
+    @GetMapping("")
+    void methodWithGetMappingAnnotation() throws ExceptionHardcodingDetailMessage;
+
+    @PostMapping(value = "")
+    void methodWithPostMappingAnnotation() throws ExceptionWithEmptyConstructorException;
+
+    @PutMapping("")
+    void methodWithPutMappingAnnotation() throws ExceptionWithStringConstructorException;
+
+    @DeleteMapping("")
+    void methodWithDeleteMappingAnnotation() throws ExceptionWithTwoStringsConstructorException;
+
+    @PatchMapping("")
+    void methodWithPatchMappingAnnotation() throws ExceptionWithThrowableConstructorException;
   }
 
   private static interface TestApiClassWithInheritedExceptions {
