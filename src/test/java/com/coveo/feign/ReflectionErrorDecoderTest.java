@@ -18,6 +18,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -247,6 +249,14 @@ public class ReflectionErrorDecoderTest {
     @RequestLine("")
     void anotherMethodWithStringAndThrowableConstructorException()
         throws ExceptionWithStringAndThrowableConstructorException;
+
+    @RequestMapping("")
+    void methodWithRequestMappingAndStringConstructorException()
+        throws ExceptionWithStringConstructorException;
+
+    @GetMapping("")
+    void methodWithGetMappingAndStringConstructorException()
+        throws ExceptionWithStringConstructorException;
   }
 
   private static interface TestApiClassWithInheritedExceptions {
