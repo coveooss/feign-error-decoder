@@ -19,9 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.coveo.feign.hierarchy.CachedSpringClassHierarchySupplier;
 import com.coveo.feign.hierarchy.ClassHierarchySupplier;
 import com.coveo.feign.hierarchy.EmptyClassHierarchySupplier;
-import com.coveo.feign.hierarchy.SpringClassHierarchySupplier;
 import com.coveo.feign.util.ClassUtils;
 
 import feign.RequestLine;
@@ -46,7 +46,6 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   private String basePackage;
   private Decoder decoder = new JacksonDecoder();
   private ErrorDecoder fallbackErrorDecoder = new ErrorDecoder.Default();
-  private ClassHierarchySupplier classHierarchySupplier;
 
   public ReflectionErrorDecoder(
       Class<?> apiClass, Class<T> apiResponseClass, Class<S> baseExceptionClass) {
@@ -64,7 +63,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
         baseExceptionClass,
         basePackage,
         ClassUtils.isSpringFrameworkAvailable()
-            ? new SpringClassHierarchySupplier()
+            ? new CachedSpringClassHierarchySupplier(baseExceptionClass, basePackage)
             : new EmptyClassHierarchySupplier());
   }
 
@@ -76,17 +75,16 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
       ClassHierarchySupplier classHierarchySupplier) {
     this.apiClass = apiClass;
     this.apiResponseClass = apiResponseClass;
-    this.classHierarchySupplier = classHierarchySupplier;
     this.basePackage = basePackage;
 
     try {
       detailMessageField = Throwable.class.getDeclaredField("detailMessage");
       detailMessageField.setAccessible(true);
-
       for (Method method : apiClass.getMethods()) {
         if (method.getAnnotation(RequestLine.class) != null
             || (isSpringWebAvailable && isMethodAnnotedWithAMappingAnnotation(method))) {
-          processDeclaredThrownExceptions(method.getExceptionTypes(), baseExceptionClass);
+          processDeclaredThrownExceptions(
+              classHierarchySupplier, method.getExceptionTypes(), baseExceptionClass);
         }
       }
     } catch (
@@ -127,13 +125,15 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   }
 
   private void processDeclaredThrownExceptions(
-      Class<?>[] exceptionsClasses, Class<S> baseExceptionClass)
+      ClassHierarchySupplier classHierarchySupplier,
+      Class<?>[] exceptionsClasses,
+      Class<S> baseExceptionClass)
       throws InstantiationException, IllegalAccessException, IllegalArgumentException,
           InvocationTargetException {
     for (Class<?> clazz : exceptionsClasses) {
       if (baseExceptionClass.isAssignableFrom(clazz)) {
         if (Modifier.isAbstract(clazz.getModifiers())) {
-          extractExceptionInfoFromSubClasses(clazz);
+          extractExceptionInfoFromSubClasses(classHierarchySupplier, clazz);
         } else {
           extractExceptionInfo((Class<? extends S>) clazz);
         }
@@ -156,12 +156,15 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
     return exceptionToBeThrown;
   }
 
-  private void extractExceptionInfoFromSubClasses(Class<?> clazz)
+  private void extractExceptionInfoFromSubClasses(
+      ClassHierarchySupplier classHierarchySupplier, Class<?> clazz)
       throws InstantiationException, IllegalAccessException, IllegalArgumentException,
           InvocationTargetException {
     Set<Class<?>> subClasses = classHierarchySupplier.getSubClasses(clazz, basePackage);
     for (Class<?> subClass : subClasses) {
-      extractExceptionInfo((Class<? extends S>) subClass);
+      if (!Modifier.isAbstract(subClass.getModifiers())) {
+        extractExceptionInfo((Class<? extends S>) subClass);
+      }
     }
   }
 
