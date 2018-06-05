@@ -91,7 +91,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
         InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchFieldException | SecurityException
             e) {
-      throw new IllegalStateException("FeignApiExceptionErrorDecoder instantiation failed!", e);
+      throw new IllegalStateException("ReflectionErrorDecoder instantiation failed!", e);
     }
   }
 
@@ -104,7 +104,12 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
       try {
         byte[] bodyData = Util.toByteArray(response.body().asInputStream());
         responseCopy =
-            Response.create(response.status(), response.reason(), response.headers(), bodyData);
+            Response.builder()
+                .status(response.status())
+                .reason(response.reason())
+                .headers(response.headers())
+                .body(bodyData)
+                .build();
         T apiResponse = (T) decoder.decode(responseCopy, apiResponseClass);
         if (apiResponse != null && exceptionsThrown.containsKey(getKeyFromResponse(apiResponse))) {
           return getExceptionByReflection(apiResponse);

@@ -6,8 +6,7 @@ import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
 
 import java.lang.reflect.Field;
-import java.nio.charset.Charset;
-import java.util.Collection;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -212,13 +211,15 @@ public class ReflectionErrorDecoderTest {
   private Response getResponseWithErrorCode(String errorCode, String message)
       throws JsonProcessingException {
     ObjectMapper objectMapper = new ObjectMapper();
-    return Response.create(
-        400,
-        "",
-        new HashMap<String, Collection<String>>(),
-        objectMapper.writeValueAsString(
-            new ErrorCodeAndMessage().withErrorCode(errorCode).withMessage(message)),
-        Charset.forName("UTF-8"));
+    return Response.builder()
+        .status(400)
+        .reason("")
+        .headers(new HashMap<>())
+        .body(
+            objectMapper.writeValueAsString(
+                new ErrorCodeAndMessage().withErrorCode(errorCode).withMessage(message)),
+            StandardCharsets.UTF_8)
+        .build();
   }
 
   @SuppressWarnings("unchecked")
