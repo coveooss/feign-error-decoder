@@ -198,6 +198,19 @@ public class ReflectionErrorDecoderTest {
     assertThat(exception.getMessage(), is(DUMMY_MESSAGE));
   }
 
+  @Test
+  public void testAdditionalRuntimeException() throws Exception {
+    ServiceExceptionErrorDecoder errorDecoder =
+        new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
+    Response response =
+        getResponseWithErrorCode(AdditionalRuntimeException.ERROR_CODE, DUMMY_MESSAGE);
+
+    Exception exception = errorDecoder.decode("", response);
+
+    assertThat(exception, instanceOf(AdditionalRuntimeException.class));
+    assertThat(exception.getMessage(), is(DUMMY_MESSAGE));
+  }
+
   @Test(expected = IllegalStateException.class)
   public void shouldThrowOnDistinctExceptionsWithTheSameErrorCode() throws Exception {
     new ServiceExceptionErrorDecoder(TestApiClassWithDuplicateErrorCodeException.class);
@@ -331,6 +344,30 @@ public class ReflectionErrorDecoderTest {
 
     public ExceptionHardcodingDetailMessage() {
       super(ERROR_CODE, "THIS IS HARDCODED!");
+    }
+  }
+
+  public static class AdditionalRuntimeException extends AbstractAdditionalRuntimeException {
+    private static final long serialVersionUID = 1L;
+    public static final String ERROR_CODE = "RUNTIME_BSOD?";
+    public static final String ERROR_MESSAGE = "PANIC";
+
+    public AdditionalRuntimeException() {
+      super(ERROR_CODE, ERROR_MESSAGE);
+    }
+  }
+
+  public abstract static class AbstractAdditionalRuntimeException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+    private String errorCode;
+
+    protected AbstractAdditionalRuntimeException(String errorCode, String message) {
+      super(message);
+      this.errorCode = errorCode;
+    }
+
+    public String getErrorCode() {
+      return this.errorCode;
     }
   }
 

@@ -18,7 +18,7 @@ public class ThrownExceptionDetails<T> {
     return exceptionSupplier;
   }
 
-  public void setServiceExceptionSupplier(ExceptionSupplier<T> serviceExceptionSupplier) {
+  public void setExceptionSupplier(ExceptionSupplier<T> serviceExceptionSupplier) {
     this.exceptionSupplier = serviceExceptionSupplier;
   }
 
@@ -27,8 +27,8 @@ public class ThrownExceptionDetails<T> {
     return this;
   }
 
-  public ThrownExceptionDetails<T> withServiceExceptionSupplier(ExceptionSupplier<T> supplier) {
-    setServiceExceptionSupplier(supplier);
+  public ThrownExceptionDetails<T> withExceptionSupplier(ExceptionSupplier<T> supplier) {
+    setExceptionSupplier(supplier);
     return this;
   }
 
