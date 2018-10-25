@@ -84,7 +84,6 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
     this.basePackage = basePackage;
     this.classHierarchySupplier = classHierarchySupplier;
     this.baseExceptionClass = baseExceptionClass;
-    this.baseExceptionClass = baseExceptionClass;
 
     initialize();
   }
@@ -97,13 +96,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
     if (response.body() != null) {
       try {
         byte[] bodyData = Util.toByteArray(response.body().asInputStream());
-        responseCopy =
-            Response.builder()
-                .status(response.status())
-                .reason(response.reason())
-                .headers(response.headers())
-                .body(bodyData)
-                .build();
+        responseCopy = responseCopy.toBuilder().body(bodyData).build();
         T apiResponse = (T) decoder.decode(responseCopy, apiResponseClass);
         if (apiResponse != null) {
           String key = getKeyFromResponse(apiResponse);
