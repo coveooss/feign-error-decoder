@@ -103,8 +103,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
     if (response.body() != null) {
       try {
         byte[] bodyData = Util.toByteArray(response.body().asInputStream());
-        responseCopy =
-            Response.create(response.status(), response.reason(), response.headers(), bodyData);
+        responseCopy = responseCopy.toBuilder().body(bodyData).build();
         T apiResponse = (T) decoder.decode(responseCopy, apiResponseClass);
         if (apiResponse != null && exceptionsThrown.containsKey(getKeyFromResponse(apiResponse))) {
           return getExceptionByReflection(apiResponse);
