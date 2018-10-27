@@ -1,6 +1,7 @@
 package com.coveo.feign;
 
 import java.util.Map;
+import static com.coveo.feign.ReflectionErrorDecoderTestClasses.*;
 
 import feign.codec.ErrorDecoder;
 
@@ -35,10 +36,9 @@ public class ServiceExceptionErrorDecoder
   protected void addAdditionalRuntimeExceptions(
       Map<String, ThrownExceptionDetails<RuntimeException>> runtimeExceptionsThrown) {
     runtimeExceptionsThrown.put(
-        ReflectionErrorDecoderTest.AdditionalRuntimeException.ERROR_CODE,
+        AdditionalRuntimeException.ERROR_CODE,
         new ThrownExceptionDetails<RuntimeException>()
-            .withClazz(ReflectionErrorDecoderTest.AdditionalRuntimeException.class)
-            .withExceptionSupplier(
-                () -> new ReflectionErrorDecoderTest.AdditionalRuntimeException()));
+            .withClazz(AdditionalRuntimeException.class)
+            .withExceptionSupplier(() -> new AdditionalRuntimeException()));
   }
 }

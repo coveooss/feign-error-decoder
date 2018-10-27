@@ -35,7 +35,7 @@ import feign.jackson.JacksonDecoder;
 public abstract class ReflectionErrorDecoder<T, S extends Exception> implements ErrorDecoder {
   private static final Logger logger = LoggerFactory.getLogger(ReflectionErrorDecoder.class);
   private static final List<Object> SUPPORTED_CONSTRUCTOR_ARGUMENTS =
-      Arrays.asList(new String(), new Throwable());
+      Arrays.asList(new String(), new Exception(), new Error());
 
   private static Field detailMessageField;
   private static boolean isSpringWebAvailable = ClassUtils.isSpringWebAvailable();
