@@ -1,7 +1,6 @@
 package com.coveo.feign;
 
 import static org.hamcrest.Matchers.*;
-import static com.coveo.feign.ReflectionErrorDecoderTestClasses.*;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
@@ -19,13 +18,35 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.AdditionalRuntimeException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.ConcreteServiceException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.ConcreteSubServiceException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionHardcodingDetailMessage;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithEmptyConstructorException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithExceptionConstructorException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithStringAndThrowableConstructorException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithStringConstructorException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithThrowableConstructorException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithTwoStringsConstructorException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithDuplicateErrorCodeException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithInheritedExceptions;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithNoErrorCodeServiceException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithPlainExceptions;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithSpringAnnotations;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionHardcodingDetailMessage;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsNotExtendingServiceException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWithInvalidConstructor;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithMethodsNotAnnotated;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import feign.Request;
+import feign.Request.Body;
+import feign.Request.HttpMethod;
 import feign.Response;
 import feign.codec.ErrorDecoder;
 
-@SuppressWarnings({"resource"})
+@SuppressWarnings({"resource", "unused"})
 @RunWith(MockitoJUnitRunner.class)
 public class ReflectionErrorDecoderTest {
   private static final String DUMMY_MESSAGE = "dummy message";
@@ -230,6 +251,7 @@ public class ReflectionErrorDecoderTest {
             objectMapper.writeValueAsString(
                 new ErrorCodeAndMessage().withErrorCode(errorCode).withMessage(message)),
             StandardCharsets.UTF_8)
+        .request(Request.create(HttpMethod.GET, "", new HashMap<>(), Body.empty()))
         .build();
   }
 

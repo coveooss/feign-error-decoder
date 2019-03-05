@@ -10,30 +10,30 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import feign.RequestLine;
 
 public class ReflectionErrorDecoderTestClasses {
-  public static interface TestApiWithExceptionsNotExtendingServiceException {
+  public interface TestApiWithExceptionsNotExtendingServiceException {
     @RequestLine(value = "")
     void methodWithEmptyConstructorException() throws Exception;
   }
 
-  public static interface TestApiWithExceptionHardcodingDetailMessage {
+  public interface TestApiWithExceptionHardcodingDetailMessage {
     @RequestLine(value = "")
     void methodHardcodedDetailMessageException() throws ExceptionHardcodingDetailMessage;
   }
 
-  public static interface TestApiWithExceptionsWithInvalidConstructor {
+  public interface TestApiWithExceptionsWithInvalidConstructor {
     @RequestLine(value = "")
     void methodWithInvalidConstructor()
         throws ConcreteSubServiceException, ExceptionWithInvalidConstructorException;
   }
 
-  public static interface TestApiWithMethodsNotAnnotated {
+  public interface TestApiWithMethodsNotAnnotated {
     @RequestLine(value = "")
     void methodWithEmptyConstructorException() throws ExceptionWithEmptyConstructorException;
 
     void methodNotAnnotated() throws ConcreteSubServiceException;
   }
 
-  public static interface TestApiClassWithPlainExceptions {
+  public interface TestApiClassWithPlainExceptions {
     @RequestLine(value = "")
     void methodWithEmptyConstructorException() throws ExceptionWithEmptyConstructorException;
 
@@ -69,7 +69,7 @@ public class ReflectionErrorDecoderTestClasses {
         throws ExceptionWithExceptionConstructorException;
   }
 
-  public static interface TestApiClassWithSpringAnnotations {
+  public interface TestApiClassWithSpringAnnotations {
     @RequestMapping("")
     void methodWithRequestMappingAnnotation()
         throws ExceptionWithStringAndThrowableConstructorException;
@@ -90,18 +90,18 @@ public class ReflectionErrorDecoderTestClasses {
     void methodWithPatchMappingAnnotation() throws ExceptionWithThrowableConstructorException;
   }
 
-  public static interface TestApiClassWithInheritedExceptions {
+  public interface TestApiClassWithInheritedExceptions {
     @RequestLine("")
     void methodWithAbstractException() throws AbstractServiceException;
   }
 
-  public static interface TestApiClassWithDuplicateErrorCodeException {
+  public interface TestApiClassWithDuplicateErrorCodeException {
     @RequestLine("")
     void methodWithDuplicateErrorCodeException()
         throws ConcreteSubServiceException, DuplicateErrorCodeServiceException;
   }
 
-  public static interface TestApiClassWithNoErrorCodeServiceException {
+  public interface TestApiClassWithNoErrorCodeServiceException {
     @RequestLine("")
     void methodWithEmptyErrorCodeException() throws NoErrorCodeServiceException;
   }
@@ -152,6 +152,7 @@ public class ReflectionErrorDecoderTestClasses {
     private static final long serialVersionUID = 1L;
     public static final String ERROR_CODE = "KERNEL_PANIC";
 
+    @SuppressWarnings("unused")
     public ExceptionWithStringConstructorException(String useless) {
       super(ERROR_CODE);
     }
@@ -161,6 +162,7 @@ public class ReflectionErrorDecoderTestClasses {
     private static final long serialVersionUID = 1L;
     public static final String ERROR_CODE = "KERNEL_PANIC_TWICE";
 
+    @SuppressWarnings("unused")
     public ExceptionWithTwoStringsConstructorException(String useless, String anotherUseless) {
       super(ERROR_CODE);
     }
@@ -170,6 +172,7 @@ public class ReflectionErrorDecoderTestClasses {
     private static final long serialVersionUID = 1L;
     public static final String ERROR_CODE = "KERNEL_PANIC_ESCAPE!";
 
+    @SuppressWarnings("unused")
     public ExceptionWithThrowableConstructorException(Throwable e) {
       super(ERROR_CODE);
     }
@@ -197,6 +200,7 @@ public class ReflectionErrorDecoderTestClasses {
     private static final long serialVersionUID = 1L;
     public static final String ERROR_CODE = "INVALID_INPUT";
 
+    @SuppressWarnings("unused")
     public ExceptionWithInvalidConstructorException(
         Integer uselessInt, Throwable e, String useless) {
       super(ERROR_CODE, e);
