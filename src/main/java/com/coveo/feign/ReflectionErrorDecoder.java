@@ -23,6 +23,7 @@ import com.coveo.feign.hierarchy.CachedSpringClassHierarchySupplier;
 import com.coveo.feign.hierarchy.ClassHierarchySupplier;
 import com.coveo.feign.hierarchy.EmptyClassHierarchySupplier;
 import com.coveo.feign.util.ClassUtils;
+import com.coveo.feign.util.Pair;
 
 import feign.RequestLine;
 import feign.Response;
@@ -35,7 +36,12 @@ import feign.jackson.JacksonDecoder;
 public abstract class ReflectionErrorDecoder<T, S extends Exception> implements ErrorDecoder {
   private static final Logger logger = LoggerFactory.getLogger(ReflectionErrorDecoder.class);
   private static final List<Object> SUPPORTED_CONSTRUCTOR_ARGUMENTS =
-      Arrays.asList(new String(), new Exception(), new Error());
+      Arrays.asList(
+          new String(),
+          new Exception(
+              "Not the real cause, this throwable was only used for instantiation by ReflectionErrorDecoder"),
+          new Error(
+              "Not the real cause, this throwable was only used for instantiation by ReflectionErrorDecoder"));
 
   private static Field detailMessageField;
   private static boolean isSpringWebAvailable = ClassUtils.isSpringWebAvailable();
@@ -233,6 +239,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   }
 
   protected ExceptionSupplier<S> getExceptionSupplierFromExceptionClass(Class<? extends S> clazz) {
+    List<Pair<Constructor<?>, List<Object>>> potentialConstructors = new ArrayList<>();
     List<Object> supportedArguments = getSupportedConstructorArgumentInstances();
     for (Constructor<?> constructor : clazz.getConstructors()) {
       Class<?>[] parameters = constructor.getParameterTypes();
@@ -245,15 +252,36 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
             .ifPresent(argumentInstance -> arguments.add(argumentInstance));
       }
       if (arguments.size() == parameters.length) {
-        return () -> (S) constructor.newInstance(arguments.toArray(new Object[0]));
+        potentialConstructors.add(Pair.of(constructor, arguments));
       }
     }
-    logger.warn(
-        "Couldn't instantiate the exception '{}' for the interface '{}'. It needs an empty or "
-            + "a combination of any number of String or Throwable arguments *public* constructor.",
-        clazz.getName(),
-        apiClass.getName());
-    return null;
+
+    if (potentialConstructors.isEmpty()) {
+      logger.warn(
+          "Couldn't instantiate the exception '{}' for the interface '{}'. It needs an empty or "
+              + "a combination of any number of String or Throwable arguments *public* constructor.",
+          clazz.getName(),
+          apiClass.getName());
+      return null;
+    }
+
+    //Try and get a constructor without a Throwable argument
+    Pair<Constructor<?>, List<Object>> selectedConstructor =
+        potentialConstructors
+            .stream()
+            .filter(
+                pair
+                    -> pair.getRight()
+                        .stream()
+                        .noneMatch(
+                            argument -> Throwable.class.isAssignableFrom(argument.getClass())))
+            .findFirst()
+            .orElseGet(() -> potentialConstructors.get(0));
+    return ()
+        -> (S)
+            selectedConstructor
+                .getLeft()
+                .newInstance(selectedConstructor.getRight().toArray(new Object[0]));
   }
 
   protected List<Object> getSupportedConstructorArgumentInstances() {

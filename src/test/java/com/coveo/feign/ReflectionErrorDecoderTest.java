@@ -1,9 +1,13 @@
 package com.coveo.feign;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -28,6 +32,8 @@ import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithStringAndT
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithStringConstructorException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithThrowableConstructorException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithTwoStringsConstructorException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.MultipleConstructorsException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.MultipleConstructorsWithOnlyThrowableArgumentsException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithDuplicateErrorCodeException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithInheritedExceptions;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithNoErrorCodeServiceException;
@@ -36,6 +42,8 @@ import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithSpringA
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionHardcodingDetailMessage;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsNotExtendingServiceException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWithInvalidConstructor;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWithMultipleConstructors;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWithMultipleConstructorsWithOnlyThrowables;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithMethodsNotAnnotated;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -215,6 +223,38 @@ public class ReflectionErrorDecoderTest {
 
     assertThat(exception, instanceOf(ConcreteSubServiceException.class));
     assertThat(exception.getMessage(), is(DUMMY_MESSAGE));
+  }
+
+  @Test
+  public void testBestConstructorIsSelected() throws Exception {
+    Map<String, ThrownExceptionDetails<ServiceException>> exceptionsThrown =
+        getExceptionsThrownMapFromErrorDecoder(TestApiWithExceptionsWithMultipleConstructors.class);
+
+    assertThat(
+        exceptionsThrown.keySet(), containsInAnyOrder(MultipleConstructorsException.ERROR_CODE));
+    ThrownExceptionDetails<ServiceException> thrownExceptionDetails =
+        exceptionsThrown.get(MultipleConstructorsException.ERROR_CODE);
+    MultipleConstructorsException exception =
+        (MultipleConstructorsException) thrownExceptionDetails.instantiate();
+    assertThat(exception.getCause(), is(nullValue()));
+  }
+
+  @Test
+  public void testBestConstructorIsSelectedWithOnlyThrowablesArgumentConstructors()
+      throws Exception {
+    Map<String, ThrownExceptionDetails<ServiceException>> exceptionsThrown =
+        getExceptionsThrownMapFromErrorDecoder(
+            TestApiWithExceptionsWithMultipleConstructorsWithOnlyThrowables.class);
+
+    assertThat(
+        exceptionsThrown.keySet(),
+        containsInAnyOrder(MultipleConstructorsWithOnlyThrowableArgumentsException.ERROR_CODE));
+    ThrownExceptionDetails<ServiceException> thrownExceptionDetails =
+        exceptionsThrown.get(MultipleConstructorsWithOnlyThrowableArgumentsException.ERROR_CODE);
+    MultipleConstructorsWithOnlyThrowableArgumentsException exception =
+        (MultipleConstructorsWithOnlyThrowableArgumentsException)
+            thrownExceptionDetails.instantiate();
+    assertThat(exception.getCause(), is(not(nullValue())));
   }
 
   @Test

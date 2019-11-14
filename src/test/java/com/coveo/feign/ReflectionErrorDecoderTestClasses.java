@@ -10,6 +10,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import feign.RequestLine;
 
 public class ReflectionErrorDecoderTestClasses {
+  public interface TestApiWithExceptionsWithMultipleConstructors {
+    @RequestLine(value = "")
+    void soManyConstructors() throws MultipleConstructorsException;
+  }
+
+  public interface TestApiWithExceptionsWithMultipleConstructorsWithOnlyThrowables {
+    @RequestLine(value = "")
+    void soManyConstructorsWithThrowables()
+        throws MultipleConstructorsWithOnlyThrowableArgumentsException;
+  }
+
   public interface TestApiWithExceptionsNotExtendingServiceException {
     @RequestLine(value = "")
     void methodWithEmptyConstructorException() throws Exception;
@@ -259,6 +270,38 @@ public class ReflectionErrorDecoderTestClasses {
 
     public NoErrorCodeServiceException() {
       super("");
+    }
+  }
+
+  public static class MultipleConstructorsException extends ServiceException {
+    private static final long serialVersionUID = 1L;
+    public static final String ERROR_CODE = "I'M SEEING DOUBLE";
+
+    public MultipleConstructorsException(String message, Throwable cause) {
+      super(ERROR_CODE, message, cause);
+    }
+
+    public MultipleConstructorsException(String message) {
+      super(ERROR_CODE, message);
+    }
+
+    public MultipleConstructorsException() {
+      super(ERROR_CODE);
+    }
+  }
+
+  public static class MultipleConstructorsWithOnlyThrowableArgumentsException
+      extends ServiceException {
+    private static final long serialVersionUID = 1L;
+    public static final String ERROR_CODE = "THROWABLES, THROWABLES EVERYWHERE";
+
+    public MultipleConstructorsWithOnlyThrowableArgumentsException(
+        String message, Throwable cause) {
+      super(ERROR_CODE, message, cause);
+    }
+
+    public MultipleConstructorsWithOnlyThrowableArgumentsException(Throwable cause) {
+      super(ERROR_CODE, "", cause);
     }
   }
 }
