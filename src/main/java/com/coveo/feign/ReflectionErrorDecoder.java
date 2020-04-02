@@ -59,16 +59,11 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   private Decoder decoder = new JacksonDecoder();
   private ErrorDecoder fallbackErrorDecoder = new ErrorDecoder.Default();
 
-  private boolean isMultipleFieldsEnabled;
+  private boolean isMultipleFieldsEnabled = false;
 
   public ReflectionErrorDecoder(
       Class<?> apiClass, Class<T> apiResponseClass, Class<S> baseExceptionClass) {
     this(apiClass, apiResponseClass, baseExceptionClass, "");
-  }
-
-  public ReflectionErrorDecoder(
-          Class<?> apiClass, Class<T> apiResponseClass, Class<S> baseExceptionClass, boolean isMultipleFieldsEnabled) {
-    this(apiClass, apiResponseClass, baseExceptionClass, "", isMultipleFieldsEnabled);
   }
 
   public ReflectionErrorDecoder(
@@ -91,23 +86,6 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
       Class<T> apiResponseClass,
       Class<S> baseExceptionClass,
       String basePackage,
-      boolean isMultipleFieldsEnabled) {
-    this(
-        apiClass,
-        apiResponseClass,
-        baseExceptionClass,
-        basePackage,
-        ClassUtils.isSpringFrameworkAvailable()
-            ? new CachedSpringClassHierarchySupplier(baseExceptionClass, basePackage)
-            : new EmptyClassHierarchySupplier(),
-        isMultipleFieldsEnabled);
-  }
-
-  public ReflectionErrorDecoder(
-      Class<?> apiClass,
-      Class<T> apiResponseClass,
-      Class<S> baseExceptionClass,
-      String basePackage,
       ClassHierarchySupplier classHierarchySupplier) {
     this.apiClass = apiClass;
     this.apiResponseClass = apiResponseClass;
@@ -118,21 +96,8 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
     initialize();
   }
 
-  public ReflectionErrorDecoder(
-          Class<?> apiClass,
-          Class<T> apiResponseClass,
-          Class<S> baseExceptionClass,
-          String basePackage,
-          ClassHierarchySupplier classHierarchySupplier,
-          boolean isMultipleFieldsEnabled) {
-    this.apiClass = apiClass;
-    this.apiResponseClass = apiResponseClass;
-    this.basePackage = basePackage;
-    this.classHierarchySupplier = classHierarchySupplier;
-    this.baseExceptionClass = baseExceptionClass;
+  public void setMultipleFieldsEnabled(boolean isMultipleFieldsEnabled) {
     this.isMultipleFieldsEnabled = isMultipleFieldsEnabled;
-
-    initialize();
   }
 
   //The copied response will be closed in SynchronousMethodHandler and the actual is closed in Util.toByteArray

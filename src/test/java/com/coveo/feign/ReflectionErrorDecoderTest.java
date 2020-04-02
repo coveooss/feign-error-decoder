@@ -277,9 +277,10 @@ public class ReflectionErrorDecoderTest {
   @Test
   public void testMultipleFieldsException() throws Exception {
     ServiceExceptionErrorDecoder errorDecoder =
-            new ServiceExceptionErrorDecoder(TestApiWithExceptionsWithMultipleFields.class, true);
-    Map<String, Object> responseAsMap = new HashMap<>();
+            new ServiceExceptionErrorDecoder(TestApiWithExceptionsWithMultipleFields.class);
+    errorDecoder.setMultipleFieldsEnabled(true);
 
+    Map<String, Object> responseAsMap = new HashMap<>();
     responseAsMap.put("errorCode", MultipleFieldsException.ERROR_CODE);
     responseAsMap.put("message", DUMMY_MESSAGE);
     responseAsMap.put("field1", 1);
