@@ -12,8 +12,17 @@ public class ServiceExceptionErrorDecoder
     super(apiClass, ErrorCodeAndMessage.class, ServiceException.class, "com.coveo.feign");
   }
 
+  public ServiceExceptionErrorDecoder(Class<?> apiClass, boolean isMultipleFieldsEnabled) {
+    super(apiClass, ErrorCodeAndMessage.class, ServiceException.class, "com.coveo.feign", isMultipleFieldsEnabled);
+  }
+
   public ServiceExceptionErrorDecoder(Class<?> apiClass, ErrorDecoder fallbackErrorDecoder) {
     super(apiClass, ErrorCodeAndMessage.class, ServiceException.class, "com.coveo.feign");
+    setFallbackErrorDecoder(fallbackErrorDecoder);
+  }
+
+  public ServiceExceptionErrorDecoder(Class<?> apiClass, ErrorDecoder fallbackErrorDecoder, boolean isMultipleFieldsEnabled) {
+    super(apiClass, ErrorCodeAndMessage.class, ServiceException.class, "com.coveo.feign", isMultipleFieldsEnabled);
     setFallbackErrorDecoder(fallbackErrorDecoder);
   }
 

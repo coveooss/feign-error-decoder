@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -61,9 +59,16 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   private Decoder decoder = new JacksonDecoder();
   private ErrorDecoder fallbackErrorDecoder = new ErrorDecoder.Default();
 
+  private boolean isMultipleFieldsEnabled;
+
   public ReflectionErrorDecoder(
       Class<?> apiClass, Class<T> apiResponseClass, Class<S> baseExceptionClass) {
     this(apiClass, apiResponseClass, baseExceptionClass, "");
+  }
+
+  public ReflectionErrorDecoder(
+          Class<?> apiClass, Class<T> apiResponseClass, Class<S> baseExceptionClass, boolean isMultipleFieldsEnabled) {
+    this(apiClass, apiResponseClass, baseExceptionClass, "", isMultipleFieldsEnabled);
   }
 
   public ReflectionErrorDecoder(
@@ -86,12 +91,46 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
       Class<T> apiResponseClass,
       Class<S> baseExceptionClass,
       String basePackage,
+      boolean isMultipleFieldsEnabled) {
+    this(
+        apiClass,
+        apiResponseClass,
+        baseExceptionClass,
+        basePackage,
+        ClassUtils.isSpringFrameworkAvailable()
+            ? new CachedSpringClassHierarchySupplier(baseExceptionClass, basePackage)
+            : new EmptyClassHierarchySupplier(),
+        isMultipleFieldsEnabled);
+  }
+
+  public ReflectionErrorDecoder(
+      Class<?> apiClass,
+      Class<T> apiResponseClass,
+      Class<S> baseExceptionClass,
+      String basePackage,
       ClassHierarchySupplier classHierarchySupplier) {
     this.apiClass = apiClass;
     this.apiResponseClass = apiResponseClass;
     this.basePackage = basePackage;
     this.classHierarchySupplier = classHierarchySupplier;
     this.baseExceptionClass = baseExceptionClass;
+
+    initialize();
+  }
+
+  public ReflectionErrorDecoder(
+          Class<?> apiClass,
+          Class<T> apiResponseClass,
+          Class<S> baseExceptionClass,
+          String basePackage,
+          ClassHierarchySupplier classHierarchySupplier,
+          boolean isMultipleFieldsEnabled) {
+    this.apiClass = apiClass;
+    this.apiResponseClass = apiResponseClass;
+    this.basePackage = basePackage;
+    this.classHierarchySupplier = classHierarchySupplier;
+    this.baseExceptionClass = baseExceptionClass;
+    this.isMultipleFieldsEnabled = isMultipleFieldsEnabled;
 
     initialize();
   }
@@ -109,7 +148,9 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
         if (apiResponse != null) {
           String key = getKeyFromResponse(apiResponse);
           if (exceptionsThrown.containsKey(key)) {
-            return getExceptionByObjectMapperAndReflection(key, apiResponse, responseCopy);
+            return isMultipleFieldsEnabled ?
+                    getExceptionByObjectMapperAndReflection(key, apiResponse, responseCopy) :
+                    getExceptionByReflection(key, apiResponse);
           } else if (runtimeExceptionsThrown.containsKey(key)) {
             return getRuntimeExceptionByReflection(key, apiResponse);
           }

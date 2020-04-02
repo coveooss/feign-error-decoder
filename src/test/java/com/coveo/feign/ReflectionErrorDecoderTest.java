@@ -114,7 +114,8 @@ public class ReflectionErrorDecoderTest {
             ExceptionWithTwoStringsConstructorException.ERROR_CODE,
             ExceptionWithThrowableConstructorException.ERROR_CODE,
             ExceptionWithStringAndThrowableConstructorException.ERROR_CODE,
-            ExceptionWithExceptionConstructorException.ERROR_CODE));
+            ExceptionWithExceptionConstructorException.ERROR_CODE,
+            MultipleFieldsException.ERROR_CODE));
   }
 
   @Test
@@ -276,7 +277,7 @@ public class ReflectionErrorDecoderTest {
   @Test
   public void testMultipleFieldsException() throws Exception {
     ServiceExceptionErrorDecoder errorDecoder =
-            new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
+            new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class, true);
     Map<String, Object> responseAsMap = new HashMap<>();
 
     responseAsMap.put("errorCode", MultipleFieldsException.ERROR_CODE);
