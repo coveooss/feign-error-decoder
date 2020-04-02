@@ -11,6 +11,8 @@ import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -34,6 +36,7 @@ import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithThrowableC
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithTwoStringsConstructorException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.MultipleConstructorsException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.MultipleConstructorsWithOnlyThrowableArgumentsException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.MultipleFieldsException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithDuplicateErrorCodeException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithInheritedExceptions;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithNoErrorCodeServiceException;
@@ -268,6 +271,42 @@ public class ReflectionErrorDecoderTest {
 
     assertThat(exception, instanceOf(AdditionalRuntimeException.class));
     assertThat(exception.getMessage(), is(DUMMY_MESSAGE));
+  }
+
+  @Test
+  public void testMultipleFieldsException() throws Exception {
+    ServiceExceptionErrorDecoder errorDecoder =
+            new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
+    Map<String, Object> responseAsMap = new HashMap<>();
+
+    responseAsMap.put("errorCode", MultipleFieldsException.ERROR_CODE);
+    responseAsMap.put("message", DUMMY_MESSAGE);
+    responseAsMap.put("field1", 1);
+    responseAsMap.put("field2", 1.0);
+    responseAsMap.put("field3", "hello world");
+    responseAsMap.put("field4", Arrays.asList("hello", "world"));
+    responseAsMap.put("field5", Collections.singletonMap("key", "value"));
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    Response response = Response.builder()
+            .status(400)
+            .reason("")
+            .headers(new HashMap<>())
+            .body(objectMapper.writeValueAsString(responseAsMap), StandardCharsets.UTF_8)
+            .request(Request.create(HttpMethod.GET, "", new HashMap<>(), Body.empty()))
+            .build();
+
+    Exception exception = errorDecoder.decode("", response);
+
+    assertThat(exception, instanceOf(MultipleFieldsException.class));
+
+    MultipleFieldsException multipleFieldsException = (MultipleFieldsException) exception;
+    assertThat(multipleFieldsException.getMessage(), is(DUMMY_MESSAGE));
+    assertThat(multipleFieldsException.getField1(), is(responseAsMap.get("field1")));
+    assertThat(multipleFieldsException.getField2(), is(responseAsMap.get("field2")));
+    assertThat(multipleFieldsException.getField3(), is(responseAsMap.get("field3")));
+    assertThat(multipleFieldsException.getField4(), is(responseAsMap.get("field4")));
+    assertThat(multipleFieldsException.getField5(), is(responseAsMap.get("field5")));
   }
 
   @Test(expected = IllegalStateException.class)

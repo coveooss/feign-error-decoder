@@ -1,5 +1,8 @@
 package com.coveo.feign;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -78,6 +81,9 @@ public class ReflectionErrorDecoderTestClasses {
     @GetMapping("")
     void methodWithGetMappingAndExceptionConstructorException()
         throws ExceptionWithExceptionConstructorException;
+
+    @GetMapping("")
+    void methodWithMultipleFieldsException() throws MultipleFieldsException;
   }
 
   public interface TestApiClassWithSpringAnnotations {
@@ -302,6 +308,62 @@ public class ReflectionErrorDecoderTestClasses {
 
     public MultipleConstructorsWithOnlyThrowableArgumentsException(Throwable cause) {
       super(ERROR_CODE, "", cause);
+    }
+  }
+
+  public static class MultipleFieldsException extends ServiceException {
+    private static final long serialVersionUID = 1L;
+    public static final String ERROR_CODE = "MANY_FIELDS";
+
+    private Integer field1;
+    private Double field2;
+
+    private String field3;
+    private List<String> field4;
+    private Map<String, Object> field5;
+
+    public MultipleFieldsException() {
+      super(ERROR_CODE);
+    };
+
+    Integer getField1() {
+      return field1;
+    }
+
+    Double getField2() {
+      return field2;
+    }
+
+    String getField3() {
+      return field3;
+    }
+
+    List<String> getField4() {
+      return field4;
+    }
+
+    Map<String, Object> getField5() {
+      return field5;
+    }
+
+    public void setField1(Integer field1) {
+      this.field1 = field1;
+    }
+
+    public void setField2(Double field2) {
+      this.field2 = field2;
+    }
+
+    public void setField3(String field3) {
+      this.field3 = field3;
+    }
+
+    public void setField4(List<String> field4) {
+      this.field4 = field4;
+    }
+
+    public void setField5(Map<String, Object> field5) {
+      this.field5 = field5;
     }
   }
 }
