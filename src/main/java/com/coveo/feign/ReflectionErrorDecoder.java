@@ -58,7 +58,6 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   private Map<String, ThrownExceptionDetails<RuntimeException>> runtimeExceptionsThrown =
       new HashMap<>();
 
-  private ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   private Decoder decoder = new JacksonDecoder();
   private ErrorDecoder fallbackErrorDecoder = new ErrorDecoder.Default();
 
@@ -191,7 +190,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
 
   private S getExceptionByObjectMapperAndReflection(String exceptionKey, T apiResponse, Response response)
           throws IllegalArgumentException, IllegalAccessException, IOException {
-    S exceptionToBeThrown = objectMapper.readValue(response.body().asInputStream(), exceptionsThrown.get(exceptionKey).getClazz());
+    S exceptionToBeThrown = (S) decoder.decode(response, exceptionsThrown.get(exceptionKey).getClazz());
     detailMessageField.set(exceptionToBeThrown, getMessageFromResponse(apiResponse));
     return exceptionToBeThrown;
   }
