@@ -13,6 +13,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import feign.RequestLine;
 
 public class ReflectionErrorDecoderTestClasses {
+  public interface TestApiWithExceptionsWithMultipleFields {
+    @RequestLine(value = "")
+    void soManyFields() throws MultipleFieldsException;
+  }
+
   public interface TestApiWithExceptionsWithMultipleConstructors {
     @RequestLine(value = "")
     void soManyConstructors() throws MultipleConstructorsException;
@@ -81,9 +86,6 @@ public class ReflectionErrorDecoderTestClasses {
     @GetMapping("")
     void methodWithGetMappingAndExceptionConstructorException()
         throws ExceptionWithExceptionConstructorException;
-
-    @GetMapping("")
-    void methodWithMultipleFieldsException() throws MultipleFieldsException;
   }
 
   public interface TestApiClassWithSpringAnnotations {

@@ -47,6 +47,7 @@ import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsNo
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWithInvalidConstructor;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWithMultipleConstructors;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWithMultipleConstructorsWithOnlyThrowables;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWithMultipleFields;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithMethodsNotAnnotated;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -114,8 +115,7 @@ public class ReflectionErrorDecoderTest {
             ExceptionWithTwoStringsConstructorException.ERROR_CODE,
             ExceptionWithThrowableConstructorException.ERROR_CODE,
             ExceptionWithStringAndThrowableConstructorException.ERROR_CODE,
-            ExceptionWithExceptionConstructorException.ERROR_CODE,
-            MultipleFieldsException.ERROR_CODE));
+            ExceptionWithExceptionConstructorException.ERROR_CODE));
   }
 
   @Test
@@ -277,7 +277,7 @@ public class ReflectionErrorDecoderTest {
   @Test
   public void testMultipleFieldsException() throws Exception {
     ServiceExceptionErrorDecoder errorDecoder =
-            new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class, true);
+            new ServiceExceptionErrorDecoder(TestApiWithExceptionsWithMultipleFields.class, true);
     Map<String, Object> responseAsMap = new HashMap<>();
 
     responseAsMap.put("errorCode", MultipleFieldsException.ERROR_CODE);
