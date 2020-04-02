@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -56,6 +58,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   private Map<String, ThrownExceptionDetails<RuntimeException>> runtimeExceptionsThrown =
       new HashMap<>();
 
+  private ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   private Decoder decoder = new JacksonDecoder();
   private ErrorDecoder fallbackErrorDecoder = new ErrorDecoder.Default();
 
@@ -107,7 +110,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
         if (apiResponse != null) {
           String key = getKeyFromResponse(apiResponse);
           if (exceptionsThrown.containsKey(key)) {
-            return getExceptionByReflection(key, apiResponse);
+            return getExceptionByObjectMapperAndReflection(key, apiResponse, responseCopy);
           } else if (runtimeExceptionsThrown.containsKey(key)) {
             return getRuntimeExceptionByReflection(key, apiResponse);
           }
@@ -118,6 +121,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
           IllegalAccessException | IllegalArgumentException | InstantiationException
                   | InvocationTargetException
               e) {
+
         logger.error(
             "Error instantiating the exception declared thrown for the interface '{}'",
             apiClass.getName(),
@@ -181,6 +185,13 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
       throws IllegalArgumentException, IllegalAccessException, InstantiationException,
           InvocationTargetException {
     S exceptionToBeThrown = exceptionsThrown.get(exceptionKey).instantiate();
+    detailMessageField.set(exceptionToBeThrown, getMessageFromResponse(apiResponse));
+    return exceptionToBeThrown;
+  }
+
+  private S getExceptionByObjectMapperAndReflection(String exceptionKey, T apiResponse, Response response)
+          throws IllegalArgumentException, IllegalAccessException, IOException {
+    S exceptionToBeThrown = objectMapper.readValue(response.body().asInputStream(), exceptionsThrown.get(exceptionKey).getClazz());
     detailMessageField.set(exceptionToBeThrown, getMessageFromResponse(apiResponse));
     return exceptionToBeThrown;
   }
