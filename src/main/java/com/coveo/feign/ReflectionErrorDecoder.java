@@ -126,7 +126,6 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
           IllegalAccessException | IllegalArgumentException | InstantiationException
                   | InvocationTargetException
               e) {
-
         logger.error(
             "Error instantiating the exception declared thrown for the interface '{}'",
             apiClass.getName(),
