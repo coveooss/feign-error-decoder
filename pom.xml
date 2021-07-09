@@ -20,7 +20,7 @@
         <feign.version>10.4.0</feign.version>
         <spring.version>5.2.7.RELEASE</spring.version>
         <jackson.version>2.11.1</jackson.version>
-        <slf4j.version>1.7.30</slf4j.version>
+        <slf4j.version>1.7.31</slf4j.version>
     </properties>
 
     <licenses>
