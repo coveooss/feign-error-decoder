@@ -3,7 +3,6 @@ package com.coveo.feign;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -19,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.coveo.feign.annotation.ExceptionMessageSetter;
 import com.coveo.feign.hierarchy.CachedSpringClassHierarchySupplier;
 import com.coveo.feign.hierarchy.ClassHierarchySupplier;
 import com.coveo.feign.hierarchy.EmptyClassHierarchySupplier;
@@ -37,13 +37,12 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   private static final Logger logger = LoggerFactory.getLogger(ReflectionErrorDecoder.class);
   private static final List<Object> SUPPORTED_CONSTRUCTOR_ARGUMENTS =
       Arrays.asList(
-          new String(),
+          "",
           new Exception(
               "Not the real cause, this throwable was only used for instantiation by ReflectionErrorDecoder"),
           new Error(
               "Not the real cause, this throwable was only used for instantiation by ReflectionErrorDecoder"));
 
-  private static Field detailMessageField;
   private static boolean isSpringWebAvailable = ClassUtils.isSpringWebAvailable();
 
   protected Class<?> apiClass;
@@ -58,6 +57,8 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
 
   private Decoder decoder = new JacksonDecoder();
   private ErrorDecoder fallbackErrorDecoder = new ErrorDecoder.Default();
+
+  private boolean exceptionMessageHandlingLogged;
 
   public ReflectionErrorDecoder(
       Class<?> apiClass, Class<T> apiResponseClass, Class<S> baseExceptionClass) {
@@ -95,7 +96,6 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   }
 
   //The copied response will be closed in SynchronousMethodHandler and the actual is closed in Util.toByteArray
-  @SuppressWarnings("resource")
   @Override
   public Exception decode(String methodKey, Response response) {
     Response responseCopy = response;
@@ -108,7 +108,8 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
           String key = getKeyFromResponse(apiResponse);
           if (exceptionsThrown.containsKey(key)) {
             return getExceptionByReflection(key, apiResponse);
-          } else if (runtimeExceptionsThrown.containsKey(key)) {
+          }
+          if (runtimeExceptionsThrown.containsKey(key)) {
             return getRuntimeExceptionByReflection(key, apiResponse);
           }
         }
@@ -129,8 +130,6 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
 
   private void initialize() {
     try {
-      detailMessageField = Throwable.class.getDeclaredField("detailMessage");
-      detailMessageField.setAccessible(true);
       for (Method method : apiClass.getMethods()) {
         if (method.getAnnotation(RequestLine.class) != null
             || (isSpringWebAvailable && isMethodAnnotedWithAMappingAnnotation(method))) {
@@ -139,7 +138,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
       }
     } catch (
         InstantiationException | IllegalAccessException | IllegalArgumentException
-                | InvocationTargetException | NoSuchFieldException | SecurityException
+                | InvocationTargetException | SecurityException
             e) {
       throw new IllegalStateException("ReflectionErrorDecoder instantiation failed!", e);
     }
@@ -148,8 +147,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   }
 
   private void processDeclaredThrownExceptions(Class<?>[] thrownExceptionsClasses)
-      throws InstantiationException, IllegalAccessException, IllegalArgumentException,
-          InvocationTargetException {
+      throws InstantiationException, IllegalAccessException, InvocationTargetException {
     for (Class<?> clazz : thrownExceptionsClasses) {
       if (baseExceptionClass.isAssignableFrom(clazz)) {
         if (Modifier.isAbstract(clazz.getModifiers())) {
@@ -169,26 +167,29 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   }
 
   private RuntimeException getRuntimeExceptionByReflection(String exceptionKey, T apiResponse)
-      throws InstantiationException, IllegalAccessException, IllegalArgumentException,
-          InvocationTargetException {
+      throws InstantiationException, IllegalAccessException, InvocationTargetException {
     RuntimeException runtimeExceptionToBeThrown =
         runtimeExceptionsThrown.get(exceptionKey).instantiate();
-    detailMessageField.set(runtimeExceptionToBeThrown, getMessageFromResponse(apiResponse));
+    if (runtimeExceptionToBeThrown instanceof ExceptionMessageSetter) {
+      ((ExceptionMessageSetter) runtimeExceptionToBeThrown)
+          .setExceptionMessage(getMessageFromResponse(apiResponse));
+    }
     return runtimeExceptionToBeThrown;
   }
 
   private S getExceptionByReflection(String exceptionKey, T apiResponse)
-      throws IllegalArgumentException, IllegalAccessException, InstantiationException,
-          InvocationTargetException {
+      throws IllegalAccessException, InstantiationException, InvocationTargetException {
     S exceptionToBeThrown = exceptionsThrown.get(exceptionKey).instantiate();
-    detailMessageField.set(exceptionToBeThrown, getMessageFromResponse(apiResponse));
+    if (exceptionToBeThrown instanceof ExceptionMessageSetter) {
+      ((ExceptionMessageSetter) exceptionToBeThrown)
+          .setExceptionMessage(getMessageFromResponse(apiResponse));
+    }
     return exceptionToBeThrown;
   }
 
   private void extractExceptionInfoFromSubClasses(
       ClassHierarchySupplier classHierarchySupplier, Class<?> clazz)
-      throws InstantiationException, IllegalAccessException, IllegalArgumentException,
-          InvocationTargetException {
+      throws InstantiationException, IllegalAccessException, InvocationTargetException {
     Set<Class<?>> subClasses = classHierarchySupplier.getSubClasses(clazz, basePackage);
     for (Class<?> subClass : subClasses) {
       if (!Modifier.isAbstract(subClass.getModifiers())) {
@@ -198,8 +199,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   }
 
   private void extractExceptionInfo(Class<? extends S> clazz)
-      throws InstantiationException, IllegalAccessException, IllegalArgumentException,
-          InvocationTargetException {
+      throws InstantiationException, IllegalAccessException, InvocationTargetException {
     ExceptionSupplier<S> supplier = getExceptionSupplierFromExceptionClass(clazz);
 
     if (supplier != null) {
@@ -225,6 +225,14 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
                 clazz.getName(),
                 existingExceptionDetails.getClazz().getName()));
       }
+
+      if (!exceptionMessageHandlingLogged
+          && !ExceptionMessageSetter.class.isAssignableFrom(clazz)) {
+        logger.warn(
+            "The class '{}' or its superclass(es) do not implement ExceptionMessageSetter, therefore the Throwable detailMessage field will not be set. This will be only logged once.",
+            clazz);
+        exceptionMessageHandlingLogged = true;
+      }
     }
   }
 
@@ -249,7 +257,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
             .stream()
             .filter(argumentInstance -> parameter.isAssignableFrom(argumentInstance.getClass()))
             .findFirst()
-            .ifPresent(argumentInstance -> arguments.add(argumentInstance));
+            .ifPresent(arguments::add);
       }
       if (arguments.size() == parameters.length) {
         potentialConstructors.add(Pair.of(constructor, arguments));

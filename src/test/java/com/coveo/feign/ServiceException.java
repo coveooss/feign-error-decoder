@@ -1,8 +1,11 @@
 package com.coveo.feign;
 
-public abstract class ServiceException extends Exception {
+import com.coveo.feign.annotation.ExceptionMessageSetter;
+
+public abstract class ServiceException extends Exception implements ExceptionMessageSetter {
   private static final long serialVersionUID = 4116691862956368612L;
   private String errorCode;
+  private String detailMessage;
 
   protected ServiceException(String errorCode) {
     this.errorCode = errorCode;
@@ -25,5 +28,15 @@ public abstract class ServiceException extends Exception {
 
   public String getErrorCode() {
     return errorCode;
+  }
+
+  @Override
+  public String getMessage() {
+    return detailMessage == null ? super.getMessage() : detailMessage;
+  }
+
+  @Override
+  public void setExceptionMessage(String detailMessage) {
+    this.detailMessage = detailMessage;
   }
 }
