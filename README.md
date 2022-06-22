@@ -17,7 +17,7 @@ The plugin is available on Maven Central :
     <dependency>
       <groupId>com.coveo</groupId>
       <artifactId>feign-error-decoder</artifactId>
-      <version>1.4.0</version>
+      <version>2.0.0</version>
     </dependency>
 ```
 
@@ -79,6 +79,30 @@ Use the [Feign builder](https://github.com/OpenFeign/feign#customization) to inj
 ## Supported interface annotations
 The supported annotations on the interfaces are Feign's `@RequestLine` and Spring `@RequestMapping`. As of version 1.2.0, it also supports `@GetMapping`, `@PostMapping`, `@PutMapping`, `@DeleteMapping` and `@PatchMapping`.
 # Optional customization
+## Throwable message handling
+In versions 1.x, this library sets the `detailMessage` field of the `Throwable` instance via reflection using the message from the `ReflectionErrorDecoder::getMessageFromResponse` method. This is not supported anymore in JDK 16+ as it's considered an illegal reflective access.
+
+To work around this, a new interface `ExceptionMessageSetter` has been introduced. It is meant to be used on the base exception class like this :
+```java
+public abstract class ServiceException extends Exception implements ExceptionMessageSetter {
+  private String detailMessage;
+  
+  @Override
+  public String getMessage() {
+    return detailMessage == null ? super.getMessage() : detailMessage;
+  }
+
+  @Override
+  public void setExceptionMessage(String detailMessage) {
+    this.detailMessage = detailMessage;
+  }
+}
+```
+
+This way, the `Throwable` message field will be gracefully set without using illegal reflective access. Having an interface instead of an abstract class was decided to make sure this library doesn't creep up an abstract class in your code. However, it has the tradeoff that you need to override the `Throwable::getMessage` yourself.
+
+All the library dependencies have been made `<optional>true</optional>` so you can link on this library in your base exception package without having to transitively pull on Feign.
+
 ## Exception inheritance support with classpath scanning
 A `ClassHierarchySupplier` interface is used to support classpath scanning to fetch the hierarchy of abstract exception classes. This allows you to declare a specific base exception as thrown on the client interface and let the interface scan all the possible exceptions that can be thrown.
 ### With Spring

@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.coveo.feign.annotation.ExceptionMessageSetter;
+
 import feign.RequestLine;
 
 public class ReflectionErrorDecoderTestClasses {
@@ -126,13 +128,26 @@ public class ReflectionErrorDecoderTestClasses {
     }
   }
 
-  public static class AdditionalRuntimeException extends AbstractAdditionalRuntimeException {
+  public static class AdditionalRuntimeException extends AbstractAdditionalRuntimeException
+      implements ExceptionMessageSetter {
     private static final long serialVersionUID = 1L;
     public static final String ERROR_CODE = "RUNTIME_BSOD?";
     public static final String ERROR_MESSAGE = "PANIC";
 
+    private String detailMessage;
+
     public AdditionalRuntimeException() {
       super(ERROR_CODE, ERROR_MESSAGE);
+    }
+
+    @Override
+    public String getMessage() {
+      return detailMessage == null ? super.getMessage() : detailMessage;
+    }
+
+    @Override
+    public void setExceptionMessage(String detailMessage) {
+      this.detailMessage = detailMessage;
     }
   }
 

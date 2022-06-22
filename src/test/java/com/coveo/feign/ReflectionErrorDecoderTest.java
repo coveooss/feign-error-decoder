@@ -1,12 +1,8 @@
 package com.coveo.feign;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.eq;
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.Field;
@@ -15,12 +11,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.AdditionalRuntimeException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ConcreteServiceException;
@@ -55,7 +51,7 @@ import feign.Response;
 import feign.codec.ErrorDecoder;
 
 @SuppressWarnings({"resource", "unused"})
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ReflectionErrorDecoderTest {
   private static final String DUMMY_MESSAGE = "dummy message";
   private static final Field EXCEPTION_THROWN_FIELD;
@@ -95,7 +91,7 @@ public class ReflectionErrorDecoderTest {
     ArgumentCaptor<Response> responseCaptor = ArgumentCaptor.forClass(Response.class);
     verify(fallbackErrorDecoderMock).decode(eq(""), responseCaptor.capture());
 
-    assertThat(responseCaptor.getValue().body(), not(response.body()));
+    assertThat(responseCaptor.getValue().body()).isNotEqualTo(response.body());
   }
 
   @Test
@@ -103,15 +99,14 @@ public class ReflectionErrorDecoderTest {
     Map<String, ThrownExceptionDetails<ServiceException>> exceptionsThrown =
         getExceptionsThrownMapFromErrorDecoder(TestApiClassWithPlainExceptions.class);
 
-    assertThat(
-        exceptionsThrown.keySet(),
-        containsInAnyOrder(
+    assertThat(exceptionsThrown.keySet())
+        .containsExactly(
             ExceptionWithEmptyConstructorException.ERROR_CODE,
             ExceptionWithStringConstructorException.ERROR_CODE,
             ExceptionWithTwoStringsConstructorException.ERROR_CODE,
             ExceptionWithThrowableConstructorException.ERROR_CODE,
             ExceptionWithStringAndThrowableConstructorException.ERROR_CODE,
-            ExceptionWithExceptionConstructorException.ERROR_CODE));
+            ExceptionWithExceptionConstructorException.ERROR_CODE);
   }
 
   @Test
@@ -119,15 +114,14 @@ public class ReflectionErrorDecoderTest {
     Map<String, ThrownExceptionDetails<ServiceException>> exceptionsThrown =
         getExceptionsThrownMapFromErrorDecoder(TestApiClassWithSpringAnnotations.class);
 
-    assertThat(
-        exceptionsThrown.keySet(),
-        containsInAnyOrder(
+    assertThat(exceptionsThrown.keySet())
+        .containsExactly(
             ExceptionWithEmptyConstructorException.ERROR_CODE,
             ExceptionWithStringConstructorException.ERROR_CODE,
             ExceptionWithTwoStringsConstructorException.ERROR_CODE,
             ExceptionWithThrowableConstructorException.ERROR_CODE,
             ExceptionWithStringAndThrowableConstructorException.ERROR_CODE,
-            ExceptionHardcodingDetailMessage.ERROR_CODE));
+            ExceptionHardcodingDetailMessage.ERROR_CODE);
   }
 
   @Test
@@ -135,10 +129,9 @@ public class ReflectionErrorDecoderTest {
     Map<String, ThrownExceptionDetails<ServiceException>> exceptionsThrown =
         getExceptionsThrownMapFromErrorDecoder(TestApiClassWithInheritedExceptions.class);
 
-    assertThat(
-        exceptionsThrown.keySet(),
-        containsInAnyOrder(
-            ConcreteServiceException.ERROR_CODE, ConcreteSubServiceException.ERROR_CODE));
+    assertThat(exceptionsThrown.keySet())
+        .containsExactly(
+            ConcreteServiceException.ERROR_CODE, ConcreteSubServiceException.ERROR_CODE);
   }
 
   @Test
@@ -146,9 +139,8 @@ public class ReflectionErrorDecoderTest {
     Map<String, ThrownExceptionDetails<ServiceException>> exceptionsThrown =
         getExceptionsThrownMapFromErrorDecoder(TestApiWithMethodsNotAnnotated.class);
 
-    assertThat(
-        exceptionsThrown.keySet(),
-        containsInAnyOrder(ExceptionWithEmptyConstructorException.ERROR_CODE));
+    assertThat(exceptionsThrown.keySet())
+        .containsExactly(ExceptionWithEmptyConstructorException.ERROR_CODE);
   }
 
   @Test
@@ -157,7 +149,7 @@ public class ReflectionErrorDecoderTest {
         getExceptionsThrownMapFromErrorDecoder(
             TestApiWithExceptionsNotExtendingServiceException.class);
 
-    assertThat(exceptionsThrown.size(), is(0));
+    assertThat(exceptionsThrown.size()).isEqualTo(0);
   }
 
   @Test
@@ -165,8 +157,7 @@ public class ReflectionErrorDecoderTest {
     Map<String, ThrownExceptionDetails<ServiceException>> exceptionsThrown =
         getExceptionsThrownMapFromErrorDecoder(TestApiWithExceptionsWithInvalidConstructor.class);
 
-    assertThat(
-        exceptionsThrown.keySet(), containsInAnyOrder(ConcreteSubServiceException.ERROR_CODE));
+    assertThat(exceptionsThrown.keySet()).containsExactly(ConcreteSubServiceException.ERROR_CODE);
   }
 
   @Test
@@ -178,8 +169,8 @@ public class ReflectionErrorDecoderTest {
 
     Exception exception = errorDecoder.decode("", response);
 
-    assertThat(exception, instanceOf(ExceptionWithEmptyConstructorException.class));
-    assertThat(exception.getMessage(), is(DUMMY_MESSAGE));
+    assertThat(exception).isInstanceOf(ExceptionWithEmptyConstructorException.class);
+    assertThat(exception.getMessage()).isEqualTo(DUMMY_MESSAGE);
   }
 
   @Test
@@ -188,15 +179,15 @@ public class ReflectionErrorDecoderTest {
         new ServiceExceptionErrorDecoder(TestApiWithExceptionHardcodingDetailMessage.class);
     ExceptionHardcodingDetailMessage originalException = new ExceptionHardcodingDetailMessage();
 
-    assertThat(originalException.getMessage(), is(not(DUMMY_MESSAGE)));
+    assertThat(originalException.getMessage()).isNotEqualTo(DUMMY_MESSAGE);
 
     Response response =
         getResponseWithErrorCode(ExceptionHardcodingDetailMessage.ERROR_CODE, DUMMY_MESSAGE);
 
     Exception exception = errorDecoder.decode("", response);
 
-    assertThat(exception, instanceOf(ExceptionHardcodingDetailMessage.class));
-    assertThat(exception.getMessage(), is(DUMMY_MESSAGE));
+    assertThat(exception).isInstanceOf(ExceptionHardcodingDetailMessage.class);
+    assertThat(exception.getMessage()).isEqualTo(DUMMY_MESSAGE);
   }
 
   @Test
@@ -208,8 +199,8 @@ public class ReflectionErrorDecoderTest {
 
     Exception exception = errorDecoder.decode("", response);
 
-    assertThat(exception, instanceOf(ConcreteServiceException.class));
-    assertThat(exception.getMessage(), is(DUMMY_MESSAGE));
+    assertThat(exception).isInstanceOf(ConcreteServiceException.class);
+    assertThat(exception.getMessage()).isEqualTo(DUMMY_MESSAGE);
   }
 
   @Test
@@ -221,8 +212,8 @@ public class ReflectionErrorDecoderTest {
 
     Exception exception = errorDecoder.decode("", response);
 
-    assertThat(exception, instanceOf(ConcreteSubServiceException.class));
-    assertThat(exception.getMessage(), is(DUMMY_MESSAGE));
+    assertThat(exception).isInstanceOf(ConcreteSubServiceException.class);
+    assertThat(exception.getMessage()).isEqualTo(DUMMY_MESSAGE);
   }
 
   @Test
@@ -230,13 +221,12 @@ public class ReflectionErrorDecoderTest {
     Map<String, ThrownExceptionDetails<ServiceException>> exceptionsThrown =
         getExceptionsThrownMapFromErrorDecoder(TestApiWithExceptionsWithMultipleConstructors.class);
 
-    assertThat(
-        exceptionsThrown.keySet(), containsInAnyOrder(MultipleConstructorsException.ERROR_CODE));
+    assertThat(exceptionsThrown.keySet()).containsExactly(MultipleConstructorsException.ERROR_CODE);
     ThrownExceptionDetails<ServiceException> thrownExceptionDetails =
         exceptionsThrown.get(MultipleConstructorsException.ERROR_CODE);
     MultipleConstructorsException exception =
         (MultipleConstructorsException) thrownExceptionDetails.instantiate();
-    assertThat(exception.getCause(), is(nullValue()));
+    assertThat(exception.getCause()).isNull();
   }
 
   @Test
@@ -246,15 +236,14 @@ public class ReflectionErrorDecoderTest {
         getExceptionsThrownMapFromErrorDecoder(
             TestApiWithExceptionsWithMultipleConstructorsWithOnlyThrowables.class);
 
-    assertThat(
-        exceptionsThrown.keySet(),
-        containsInAnyOrder(MultipleConstructorsWithOnlyThrowableArgumentsException.ERROR_CODE));
+    assertThat(exceptionsThrown.keySet())
+        .containsExactly(MultipleConstructorsWithOnlyThrowableArgumentsException.ERROR_CODE);
     ThrownExceptionDetails<ServiceException> thrownExceptionDetails =
         exceptionsThrown.get(MultipleConstructorsWithOnlyThrowableArgumentsException.ERROR_CODE);
     MultipleConstructorsWithOnlyThrowableArgumentsException exception =
         (MultipleConstructorsWithOnlyThrowableArgumentsException)
             thrownExceptionDetails.instantiate();
-    assertThat(exception.getCause(), is(not(nullValue())));
+    assertThat(exception.getCause()).isNotNull();
   }
 
   @Test
@@ -266,18 +255,22 @@ public class ReflectionErrorDecoderTest {
 
     Exception exception = errorDecoder.decode("", response);
 
-    assertThat(exception, instanceOf(AdditionalRuntimeException.class));
-    assertThat(exception.getMessage(), is(DUMMY_MESSAGE));
+    assertThat(exception).isInstanceOf(AdditionalRuntimeException.class);
+    assertThat(exception.getMessage()).isEqualTo(DUMMY_MESSAGE);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void shouldThrowOnDistinctExceptionsWithTheSameErrorCode() throws Exception {
-    new ServiceExceptionErrorDecoder(TestApiClassWithDuplicateErrorCodeException.class);
+    assertThrows(
+        IllegalStateException.class,
+        () -> new ServiceExceptionErrorDecoder(TestApiClassWithDuplicateErrorCodeException.class));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void shouldThrowOnExceptionsWithTheNoErrorCode() throws Exception {
-    new ServiceExceptionErrorDecoder(TestApiClassWithNoErrorCodeServiceException.class);
+    assertThrows(
+        IllegalStateException.class,
+        () -> new ServiceExceptionErrorDecoder(TestApiClassWithNoErrorCodeServiceException.class));
   }
 
   private Response getResponseWithErrorCode(String errorCode, String message)
@@ -291,7 +284,7 @@ public class ReflectionErrorDecoderTest {
             objectMapper.writeValueAsString(
                 new ErrorCodeAndMessage().withErrorCode(errorCode).withMessage(message)),
             StandardCharsets.UTF_8)
-        .request(Request.create(HttpMethod.GET, "", new HashMap<>(), Body.empty()))
+        .request(Request.create(HttpMethod.GET, "", new HashMap<>(), Body.empty(), null))
         .build();
   }
 
