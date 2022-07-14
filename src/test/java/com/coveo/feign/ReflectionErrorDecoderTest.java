@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledForJreRange;
+import org.junit.jupiter.api.condition.JRE;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -41,6 +43,8 @@ import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWi
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWithMultipleConstructors;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWithMultipleConstructorsWithOnlyThrowables;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithMethodsNotAnnotated;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.ConcreteSubServiceExceptionWithoutInterface;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.AdditionalNotInterfacedRuntimeException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -69,7 +73,7 @@ public class ReflectionErrorDecoderTest {
 
   @Test
   public void testFallbackOnUnknownException() throws Exception {
-    ReflectionErrorDecoder<ErrorCodeAndMessage, ServiceException> errorDecoder =
+    ReflectionErrorDecoder<ErrorCodeAndMessage, BaseServiceException> errorDecoder =
         new ServiceExceptionErrorDecoder(
             TestApiClassWithPlainExceptions.class, fallbackErrorDecoderMock);
     Response response = getResponseWithErrorCode(UUID.randomUUID().toString(), DUMMY_MESSAGE);
@@ -81,7 +85,7 @@ public class ReflectionErrorDecoderTest {
 
   @Test
   public void testResponseIsBufferedOnFallback() throws Exception {
-    ReflectionErrorDecoder<ErrorCodeAndMessage, ServiceException> errorDecoder =
+    ReflectionErrorDecoder<ErrorCodeAndMessage, BaseServiceException> errorDecoder =
         new ServiceExceptionErrorDecoder(
             TestApiClassWithPlainExceptions.class, fallbackErrorDecoderMock);
     Response response = getResponseWithErrorCode(UUID.randomUUID().toString(), DUMMY_MESSAGE);
@@ -106,7 +110,8 @@ public class ReflectionErrorDecoderTest {
             ExceptionWithTwoStringsConstructorException.ERROR_CODE,
             ExceptionWithThrowableConstructorException.ERROR_CODE,
             ExceptionWithStringAndThrowableConstructorException.ERROR_CODE,
-            ExceptionWithExceptionConstructorException.ERROR_CODE);
+            ExceptionWithExceptionConstructorException.ERROR_CODE,
+            ConcreteSubServiceExceptionWithoutInterface.ERROR_CODE);
   }
 
   @Test
@@ -217,6 +222,34 @@ public class ReflectionErrorDecoderTest {
   }
 
   @Test
+  @EnabledForJreRange(max=JRE.JAVA_15)
+  public void testDecodeThrownSubAbstractExceptionWithoutInterface() throws Exception {
+    ServiceExceptionErrorDecoder errorDecoder =
+            new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
+    Response response =
+            getResponseWithErrorCode(ConcreteSubServiceExceptionWithoutInterface.ERROR_CODE, DUMMY_MESSAGE);
+
+    Exception exception = errorDecoder.decode("", response);
+
+    assertThat(exception).isInstanceOf(ConcreteSubServiceExceptionWithoutInterface.class);
+    assertThat(exception.getMessage()).isEqualTo(DUMMY_MESSAGE);
+  }
+
+  @Test
+  @EnabledForJreRange(min=JRE.JAVA_16)
+  public void testDecodeThrownSubAbstractExceptionWithoutInterfaceShouldDoNothing() throws Exception {
+    ServiceExceptionErrorDecoder errorDecoder =
+            new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
+    Response response =
+            getResponseWithErrorCode(ConcreteSubServiceExceptionWithoutInterface.ERROR_CODE, DUMMY_MESSAGE);
+
+    Exception exception = errorDecoder.decode("", response);
+
+    assertThat(exception).isInstanceOf(ConcreteSubServiceExceptionWithoutInterface.class);
+    assertThat(exception.getMessage()).isNull();
+  }
+
+  @Test
   public void testBestConstructorIsSelected() throws Exception {
     Map<String, ThrownExceptionDetails<ServiceException>> exceptionsThrown =
         getExceptionsThrownMapFromErrorDecoder(TestApiWithExceptionsWithMultipleConstructors.class);
@@ -260,6 +293,34 @@ public class ReflectionErrorDecoderTest {
   }
 
   @Test
+  @EnabledForJreRange(max=JRE.JAVA_15)
+  public void testAdditionalRuntimeExceptionWithoutInterface() throws Exception {
+    ServiceExceptionErrorDecoder errorDecoder =
+            new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
+    Response response =
+            getResponseWithErrorCode(AdditionalNotInterfacedRuntimeException.ERROR_CODE, DUMMY_MESSAGE);
+
+    Exception exception = errorDecoder.decode("", response);
+
+    assertThat(exception).isInstanceOf(AdditionalNotInterfacedRuntimeException.class);
+    assertThat(exception.getMessage()).isEqualTo(DUMMY_MESSAGE);
+  }
+
+  @Test
+  @EnabledForJreRange(min=JRE.JAVA_16)
+  public void testAdditionalRuntimeExceptionWithoutInterfaceShouldDoNothing() throws Exception {
+    ServiceExceptionErrorDecoder errorDecoder =
+            new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
+    Response response =
+            getResponseWithErrorCode(AdditionalNotInterfacedRuntimeException.ERROR_CODE, DUMMY_MESSAGE);
+
+    Exception exception = errorDecoder.decode("", response);
+
+    assertThat(exception).isInstanceOf(AdditionalNotInterfacedRuntimeException.class);
+    assertThat(exception.getMessage()).isEqualTo(AdditionalNotInterfacedRuntimeException.ERROR_MESSAGE);
+  }
+
+  @Test
   public void shouldThrowOnDistinctExceptionsWithTheSameErrorCode() throws Exception {
     assertThrows(
         IllegalStateException.class,
@@ -291,7 +352,7 @@ public class ReflectionErrorDecoderTest {
   @SuppressWarnings("unchecked")
   private Map<String, ThrownExceptionDetails<ServiceException>>
       getExceptionsThrownMapFromErrorDecoder(Class<?> apiInterface) throws Exception {
-    ReflectionErrorDecoder<ErrorCodeAndMessage, ServiceException> errorDecoder =
+    ReflectionErrorDecoder<ErrorCodeAndMessage, BaseServiceException> errorDecoder =
         new ServiceExceptionErrorDecoder(apiInterface);
     return (Map<String, ThrownExceptionDetails<ServiceException>>)
         EXCEPTION_THROWN_FIELD.get(errorDecoder);

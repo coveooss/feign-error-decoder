@@ -80,6 +80,9 @@ public class ReflectionErrorDecoderTestClasses {
     @GetMapping("")
     void methodWithGetMappingAndExceptionConstructorException()
         throws ExceptionWithExceptionConstructorException;
+
+    @RequestLine("")
+    void methodWithExceptionWithoutInterface() throws ConcreteSubServiceExceptionWithoutInterface;
   }
 
   public interface TestApiClassWithSpringAnnotations {
@@ -149,6 +152,24 @@ public class ReflectionErrorDecoderTestClasses {
     public void setExceptionMessage(String detailMessage) {
       this.detailMessage = detailMessage;
     }
+  }
+
+  public static class AdditionalNotInterfacedRuntimeException extends AbstractAdditionalRuntimeException {
+    private static final long serialVersionUID = 1L;
+    public static final String ERROR_CODE = "DOYOUEVENIMPLEMENTBRO?";
+    public static final String ERROR_MESSAGE = "PANICATTHEDISCO";
+
+    private String detailMessage;
+
+    public AdditionalNotInterfacedRuntimeException() {
+      super(ERROR_CODE, ERROR_MESSAGE);
+    }
+
+    @Override
+    public String getMessage() {
+      return detailMessage == null ? super.getMessage() : detailMessage;
+    }
+
   }
 
   public abstract static class AbstractAdditionalRuntimeException extends RuntimeException {
@@ -269,6 +290,11 @@ public class ReflectionErrorDecoderTestClasses {
     public ConcreteSubServiceException() {
       super(ERROR_CODE);
     }
+  }
+
+  public static class ConcreteSubServiceExceptionWithoutInterface extends ServiceExceptionWithoutInterface {
+    public static final String ERROR_CODE = "I WISH I HAD A PROPER INTERFACE";
+    public ConcreteSubServiceExceptionWithoutInterface() { super(ERROR_CODE);}
   }
 
   public static class DuplicateErrorCodeServiceException extends ServiceException {

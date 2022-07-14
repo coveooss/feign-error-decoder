@@ -3,6 +3,7 @@ package com.coveo.feign;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -43,6 +44,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
           new Error(
               "Not the real cause, this throwable was only used for instantiation by ReflectionErrorDecoder"));
 
+  private static Field detailMessageField;
   private static boolean isSpringWebAvailable = ClassUtils.isSpringWebAvailable();
 
   protected Class<?> apiClass;
@@ -130,6 +132,14 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
 
   private void initialize() {
     try {
+      detailMessageField = Throwable.class.getDeclaredField("detailMessage");
+      detailMessageField.setAccessible(true);
+    } catch (Exception e) {
+      logger.debug("Unable to directly set the detailMessage, make sure exception do implement {}", baseExceptionClass.getName());
+      detailMessageField = null;
+    }
+
+    try {
       for (Method method : apiClass.getMethods()) {
         if (method.getAnnotation(RequestLine.class) != null
             || (isSpringWebAvailable && isMethodAnnotedWithAMappingAnnotation(method))) {
@@ -173,6 +183,10 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
     if (runtimeExceptionToBeThrown instanceof ExceptionMessageSetter) {
       ((ExceptionMessageSetter) runtimeExceptionToBeThrown)
           .setExceptionMessage(getMessageFromResponse(apiResponse));
+    } else {
+      if(detailMessageField != null) {
+        detailMessageField.set(runtimeExceptionToBeThrown, getMessageFromResponse(apiResponse));
+      }
     }
     return runtimeExceptionToBeThrown;
   }
@@ -183,6 +197,10 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
     if (exceptionToBeThrown instanceof ExceptionMessageSetter) {
       ((ExceptionMessageSetter) exceptionToBeThrown)
           .setExceptionMessage(getMessageFromResponse(apiResponse));
+    } else {
+      if(detailMessageField != null) {
+        detailMessageField.set(exceptionToBeThrown, getMessageFromResponse(apiResponse));
+      }
     }
     return exceptionToBeThrown;
   }
