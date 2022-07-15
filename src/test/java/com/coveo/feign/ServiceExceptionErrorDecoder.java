@@ -6,19 +6,19 @@ import static com.coveo.feign.ReflectionErrorDecoderTestClasses.*;
 import feign.codec.ErrorDecoder;
 
 public class ServiceExceptionErrorDecoder
-    extends ReflectionErrorDecoder<ErrorCodeAndMessage, ServiceException> {
+    extends ReflectionErrorDecoder<ErrorCodeAndMessage, BaseServiceException> {
 
   public ServiceExceptionErrorDecoder(Class<?> apiClass) {
-    super(apiClass, ErrorCodeAndMessage.class, ServiceException.class, "com.coveo.feign");
+    super(apiClass, ErrorCodeAndMessage.class, BaseServiceException.class, "com.coveo.feign");
   }
 
   public ServiceExceptionErrorDecoder(Class<?> apiClass, ErrorDecoder fallbackErrorDecoder) {
-    super(apiClass, ErrorCodeAndMessage.class, ServiceException.class, "com.coveo.feign");
+    super(apiClass, ErrorCodeAndMessage.class, BaseServiceException.class, "com.coveo.feign");
     setFallbackErrorDecoder(fallbackErrorDecoder);
   }
 
   @Override
-  protected String getKeyFromException(ServiceException exception) {
+  protected String getKeyFromException(BaseServiceException exception) {
     return exception.getErrorCode();
   }
 
@@ -39,6 +39,11 @@ public class ServiceExceptionErrorDecoder
         AdditionalRuntimeException.ERROR_CODE,
         new ThrownExceptionDetails<RuntimeException>()
             .withClazz(AdditionalRuntimeException.class)
-            .withExceptionSupplier(() -> new AdditionalRuntimeException()));
+            .withExceptionSupplier(AdditionalRuntimeException::new));
+    runtimeExceptionsThrown.put(
+            AdditionalNotInterfacedRuntimeException.ERROR_CODE,
+            new ThrownExceptionDetails<RuntimeException>()
+                    .withClazz(AdditionalNotInterfacedRuntimeException.class)
+                    .withExceptionSupplier(AdditionalNotInterfacedRuntimeException::new));
   }
 }

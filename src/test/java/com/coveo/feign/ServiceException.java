@@ -2,41 +2,33 @@ package com.coveo.feign;
 
 import com.coveo.feign.annotation.ExceptionMessageSetter;
 
-public abstract class ServiceException extends Exception implements ExceptionMessageSetter {
+public abstract class ServiceException extends BaseServiceException implements ExceptionMessageSetter {
   private static final long serialVersionUID = 4116691862956368612L;
-  private String errorCode;
   private String detailMessage;
 
   protected ServiceException(String errorCode) {
-    this.errorCode = errorCode;
+    super(errorCode);
   }
 
   protected ServiceException(String errorCode, Throwable e) {
-    super(e);
-    this.errorCode = errorCode;
+    super(errorCode, e);
   }
 
   protected ServiceException(String errorCode, String message) {
-    super(message);
-    this.errorCode = errorCode;
+    super(errorCode, message);
   }
 
   protected ServiceException(String errorCode, String message, Throwable innerException) {
-    super(message, innerException);
-    this.errorCode = errorCode;
-  }
-
-  public String getErrorCode() {
-    return errorCode;
-  }
-
-  @Override
-  public String getMessage() {
-    return detailMessage == null ? super.getMessage() : detailMessage;
+    super(errorCode, message, innerException);
   }
 
   @Override
   public void setExceptionMessage(String detailMessage) {
     this.detailMessage = detailMessage;
+  }
+
+  @Override
+  public String getMessage() {
+    return detailMessage == null ? super.getMessage() : detailMessage;
   }
 }
