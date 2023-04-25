@@ -154,7 +154,8 @@ public class ReflectionErrorDecoderTestClasses {
     }
   }
 
-  public static class AdditionalNotInterfacedRuntimeException extends AbstractAdditionalRuntimeException {
+  public static class AdditionalNotInterfacedRuntimeException
+      extends AbstractAdditionalRuntimeException {
     private static final long serialVersionUID = 1L;
     public static final String ERROR_CODE = "DOYOUEVENIMPLEMENTBRO?";
     public static final String ERROR_MESSAGE = "PANICATTHEDISCO";
@@ -169,7 +170,6 @@ public class ReflectionErrorDecoderTestClasses {
     public String getMessage() {
       return detailMessage == null ? super.getMessage() : detailMessage;
     }
-
   }
 
   public abstract static class AbstractAdditionalRuntimeException extends RuntimeException {
@@ -292,9 +292,13 @@ public class ReflectionErrorDecoderTestClasses {
     }
   }
 
-  public static class ConcreteSubServiceExceptionWithoutInterface extends ServiceExceptionWithoutInterface {
+  public static class ConcreteSubServiceExceptionWithoutInterface
+      extends ServiceExceptionWithoutInterface {
     public static final String ERROR_CODE = "I WISH I HAD A PROPER INTERFACE";
-    public ConcreteSubServiceExceptionWithoutInterface() { super(ERROR_CODE);}
+
+    public ConcreteSubServiceExceptionWithoutInterface() {
+      super(ERROR_CODE);
+    }
   }
 
   public static class DuplicateErrorCodeServiceException extends ServiceException {

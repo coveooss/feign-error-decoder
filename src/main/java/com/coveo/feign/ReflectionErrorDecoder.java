@@ -135,7 +135,10 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
       detailMessageField = Throwable.class.getDeclaredField("detailMessage");
       detailMessageField.setAccessible(true);
     } catch (Exception e) {
-      logger.debug("Unable to directly set the detailMessage, make sure exception do implement {}", baseExceptionClass.getName());
+      logger.debug(
+          "Unable to set the detailMessage via reflection, make sure the base exception do implement '{}'. Error message: '{}'.",
+          ExceptionMessageSetter.class.getName(),
+          e.getMessage());
       detailMessageField = null;
     }
 
@@ -184,7 +187,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
       ((ExceptionMessageSetter) runtimeExceptionToBeThrown)
           .setExceptionMessage(getMessageFromResponse(apiResponse));
     } else {
-      if(detailMessageField != null) {
+      if (detailMessageField != null) {
         detailMessageField.set(runtimeExceptionToBeThrown, getMessageFromResponse(apiResponse));
       }
     }
@@ -198,7 +201,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
       ((ExceptionMessageSetter) exceptionToBeThrown)
           .setExceptionMessage(getMessageFromResponse(apiResponse));
     } else {
-      if(detailMessageField != null) {
+      if (detailMessageField != null) {
         detailMessageField.set(exceptionToBeThrown, getMessageFromResponse(apiResponse));
       }
     }
@@ -244,11 +247,13 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
                 existingExceptionDetails.getClazz().getName()));
       }
 
-      if (!exceptionMessageHandlingLogged
+      if (detailMessageField == null
+          && !exceptionMessageHandlingLogged
           && !ExceptionMessageSetter.class.isAssignableFrom(clazz)) {
         logger.warn(
-            "The class '{}' or its superclass(es) do not implement ExceptionMessageSetter, therefore the Throwable detailMessage field will not be set. This will be only logged once.",
-            clazz);
+            "The class '{}' or its superclass(es) do not implement '{}', therefore the Throwable detailMessage field will not be set. This will be only logged once.",
+            clazz,
+            ExceptionMessageSetter.class.getName());
         exceptionMessageHandlingLogged = true;
       }
     }

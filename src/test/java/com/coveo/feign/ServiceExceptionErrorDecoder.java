@@ -41,9 +41,9 @@ public class ServiceExceptionErrorDecoder
             .withClazz(AdditionalRuntimeException.class)
             .withExceptionSupplier(AdditionalRuntimeException::new));
     runtimeExceptionsThrown.put(
-            AdditionalNotInterfacedRuntimeException.ERROR_CODE,
-            new ThrownExceptionDetails<RuntimeException>()
-                    .withClazz(AdditionalNotInterfacedRuntimeException.class)
-                    .withExceptionSupplier(AdditionalNotInterfacedRuntimeException::new));
+        AdditionalNotInterfacedRuntimeException.ERROR_CODE,
+        new ThrownExceptionDetails<RuntimeException>()
+            .withClazz(AdditionalNotInterfacedRuntimeException.class)
+            .withExceptionSupplier(AdditionalNotInterfacedRuntimeException::new));
   }
 }

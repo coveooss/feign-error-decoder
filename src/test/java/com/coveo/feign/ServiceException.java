@@ -2,7 +2,8 @@ package com.coveo.feign;
 
 import com.coveo.feign.annotation.ExceptionMessageSetter;
 
-public abstract class ServiceException extends BaseServiceException implements ExceptionMessageSetter {
+public abstract class ServiceException extends BaseServiceException
+    implements ExceptionMessageSetter {
   private static final long serialVersionUID = 4116691862956368612L;
   private String detailMessage;
 

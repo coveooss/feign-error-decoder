@@ -222,12 +222,13 @@ public class ReflectionErrorDecoderTest {
   }
 
   @Test
-  @EnabledForJreRange(max=JRE.JAVA_15)
+  @EnabledForJreRange(max = JRE.JAVA_15)
   public void testDecodeThrownSubAbstractExceptionWithoutInterface() throws Exception {
     ServiceExceptionErrorDecoder errorDecoder =
-            new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
+        new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
     Response response =
-            getResponseWithErrorCode(ConcreteSubServiceExceptionWithoutInterface.ERROR_CODE, DUMMY_MESSAGE);
+        getResponseWithErrorCode(
+            ConcreteSubServiceExceptionWithoutInterface.ERROR_CODE, DUMMY_MESSAGE);
 
     Exception exception = errorDecoder.decode("", response);
 
@@ -236,12 +237,14 @@ public class ReflectionErrorDecoderTest {
   }
 
   @Test
-  @EnabledForJreRange(min=JRE.JAVA_16)
-  public void testDecodeThrownSubAbstractExceptionWithoutInterfaceShouldDoNothing() throws Exception {
+  @EnabledForJreRange(min = JRE.JAVA_16)
+  public void testDecodeThrownSubAbstractExceptionWithoutInterfaceShouldDoNothing()
+      throws Exception {
     ServiceExceptionErrorDecoder errorDecoder =
-            new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
+        new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
     Response response =
-            getResponseWithErrorCode(ConcreteSubServiceExceptionWithoutInterface.ERROR_CODE, DUMMY_MESSAGE);
+        getResponseWithErrorCode(
+            ConcreteSubServiceExceptionWithoutInterface.ERROR_CODE, DUMMY_MESSAGE);
 
     Exception exception = errorDecoder.decode("", response);
 
@@ -293,12 +296,12 @@ public class ReflectionErrorDecoderTest {
   }
 
   @Test
-  @EnabledForJreRange(max=JRE.JAVA_15)
+  @EnabledForJreRange(max = JRE.JAVA_15)
   public void testAdditionalRuntimeExceptionWithoutInterface() throws Exception {
     ServiceExceptionErrorDecoder errorDecoder =
-            new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
+        new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
     Response response =
-            getResponseWithErrorCode(AdditionalNotInterfacedRuntimeException.ERROR_CODE, DUMMY_MESSAGE);
+        getResponseWithErrorCode(AdditionalNotInterfacedRuntimeException.ERROR_CODE, DUMMY_MESSAGE);
 
     Exception exception = errorDecoder.decode("", response);
 
@@ -307,17 +310,18 @@ public class ReflectionErrorDecoderTest {
   }
 
   @Test
-  @EnabledForJreRange(min=JRE.JAVA_16)
+  @EnabledForJreRange(min = JRE.JAVA_16)
   public void testAdditionalRuntimeExceptionWithoutInterfaceShouldDoNothing() throws Exception {
     ServiceExceptionErrorDecoder errorDecoder =
-            new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
+        new ServiceExceptionErrorDecoder(TestApiClassWithPlainExceptions.class);
     Response response =
-            getResponseWithErrorCode(AdditionalNotInterfacedRuntimeException.ERROR_CODE, DUMMY_MESSAGE);
+        getResponseWithErrorCode(AdditionalNotInterfacedRuntimeException.ERROR_CODE, DUMMY_MESSAGE);
 
     Exception exception = errorDecoder.decode("", response);
 
     assertThat(exception).isInstanceOf(AdditionalNotInterfacedRuntimeException.class);
-    assertThat(exception.getMessage()).isEqualTo(AdditionalNotInterfacedRuntimeException.ERROR_MESSAGE);
+    assertThat(exception.getMessage())
+        .isEqualTo(AdditionalNotInterfacedRuntimeException.ERROR_MESSAGE);
   }
 
   @Test
