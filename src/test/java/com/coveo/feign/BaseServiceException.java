@@ -26,5 +26,4 @@ public abstract class BaseServiceException extends Exception {
   public String getErrorCode() {
     return errorCode;
   }
-
 }

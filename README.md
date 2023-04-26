@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/coveo/feign-error-decoder.svg?branch=master)](https://travis-ci.org/coveo/feign-error-decoder)
 [![MIT license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/coveo/feign-error-decoder/blob/master/LICENSE)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.coveo/feign-error-decoder/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.coveo/feign-error-decoder)
 
@@ -17,7 +16,7 @@ The plugin is available on Maven Central :
     <dependency>
       <groupId>com.coveo</groupId>
       <artifactId>feign-error-decoder</artifactId>
-      <version>2.0.0</version>
+      <version>2.2.0</version>
     </dependency>
 ```
 
