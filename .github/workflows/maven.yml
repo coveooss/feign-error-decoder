@@ -18,7 +18,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build with Maven with jdk 8
-        run: mvn -ntp compile test-compile --file pom.xml
+        run: mvn -ntp clean compile test-compile --file pom.xml
       - name: Run tests with jdk 8
         run: mvn -ntp -fae test --file pom.xml
       - name: Set up JDK 17
@@ -28,6 +28,6 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Build with Maven with jdk 17
-        run: mvn -ntp compile test-compile --file pom.xml
+        run: mvn -ntp clean compile test-compile --file pom.xml
       - name: Run tests with jdk 17
         run: mvn -fae -ntp test --file pom.xml
