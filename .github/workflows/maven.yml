@@ -17,5 +17,13 @@ jobs:
           java-version: '8'
           distribution: 'temurin'
           cache: maven
-      - name: Build with Maven
+      - name: Build with Maven with jdk 8
+        run: mvn -B verify --file pom.xml
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven with jdk 17
         run: mvn -B verify --file pom.xml
