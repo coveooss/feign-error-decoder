@@ -132,8 +132,15 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
 
   private void initialize() {
     try {
-      detailMessageField = Throwable.class.getDeclaredField("detailMessage");
-      detailMessageField.setAccessible(true);
+      if (Runtime.version().feature() < 15) {
+        detailMessageField = Throwable.class.getDeclaredField("detailMessage");
+        detailMessageField.setAccessible(true);
+      } else {
+        logger.debug(
+            "Unable to set the detailMessage via reflection for runtime version 15+, make sure the base exception do implement '{}'.",
+            ExceptionMessageSetter.class.getName());
+        detailMessageField = null;
+      }
     } catch (Exception e) {
       logger.debug(
           "Unable to set the detailMessage via reflection, make sure the base exception do implement '{}'. Error message: '{}'.",

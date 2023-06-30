@@ -20,9 +20,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.AdditionalNotInterfacedRuntimeException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.AdditionalRuntimeException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ConcreteServiceException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ConcreteSubServiceException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.ConcreteSubServiceExceptionWithoutInterface;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionHardcodingDetailMessage;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithEmptyConstructorException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithExceptionConstructorException;
@@ -43,8 +45,6 @@ import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWi
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWithMultipleConstructors;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithExceptionsWithMultipleConstructorsWithOnlyThrowables;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiWithMethodsNotAnnotated;
-import com.coveo.feign.ReflectionErrorDecoderTestClasses.ConcreteSubServiceExceptionWithoutInterface;
-import com.coveo.feign.ReflectionErrorDecoderTestClasses.AdditionalNotInterfacedRuntimeException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

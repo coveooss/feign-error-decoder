@@ -16,13 +16,15 @@ The plugin is available on Maven Central :
     <dependency>
       <groupId>com.coveo</groupId>
       <artifactId>feign-error-decoder</artifactId>
-      <version>2.2.0</version>
+      <version>3.0.0</version>
     </dependency>
 ```
 
 # Usage
 A complete example is shown in this repo as the base setup for the unit tests.
 ## Requirements
+### Runtime version
+11+
 ### Base Exception class
 In order to use this library, you need a base exception which all the exceptions declared thrown on the client interface will inherit from. This exception needs to provide a way to access a unique `String` key per subclass.
 ```java
