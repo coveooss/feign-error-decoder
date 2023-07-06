@@ -36,6 +36,7 @@ import feign.jackson.JacksonDecoder;
 @SuppressWarnings("unchecked")
 public abstract class ReflectionErrorDecoder<T, S extends Exception> implements ErrorDecoder {
   private static final Logger logger = LoggerFactory.getLogger(ReflectionErrorDecoder.class);
+
   private static final List<Object> SUPPORTED_CONSTRUCTOR_ARGUMENTS =
       Arrays.asList(
           "",
@@ -46,6 +47,26 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
 
   private static Field detailMessageField;
   private static boolean isSpringWebAvailable = ClassUtils.isSpringWebAvailable();
+
+  static {
+    try {
+      if (Runtime.version().feature() < 15) {
+        detailMessageField = Throwable.class.getDeclaredField("detailMessage");
+        detailMessageField.setAccessible(true);
+      } else {
+        logger.debug(
+            "Unable to set the detailMessage via reflection for runtime version 15+, make sure the base exception do implement '{}'.",
+            ExceptionMessageSetter.class.getName());
+        detailMessageField = null;
+      }
+    } catch (Exception e) {
+      logger.debug(
+          "Unable to set the detailMessage via reflection, make sure the base exception do implement '{}'. Error message: '{}'.",
+          ExceptionMessageSetter.class.getName(),
+          e.getMessage());
+      detailMessageField = null;
+    }
+  }
 
   protected Class<?> apiClass;
   protected Class<T> apiResponseClass;
@@ -131,17 +152,6 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
   }
 
   private void initialize() {
-    try {
-      detailMessageField = Throwable.class.getDeclaredField("detailMessage");
-      detailMessageField.setAccessible(true);
-    } catch (Exception e) {
-      logger.debug(
-          "Unable to set the detailMessage via reflection, make sure the base exception do implement '{}'. Error message: '{}'.",
-          ExceptionMessageSetter.class.getName(),
-          e.getMessage());
-      detailMessageField = null;
-    }
-
     try {
       for (Method method : apiClass.getMethods()) {
         if (method.getAnnotation(RequestLine.class) != null
