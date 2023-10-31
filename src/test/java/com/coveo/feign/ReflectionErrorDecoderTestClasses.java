@@ -111,6 +111,11 @@ public class ReflectionErrorDecoderTestClasses {
     void methodWithAbstractException() throws AbstractServiceException;
   }
 
+  public interface TestApiClassWithInheritedButNotAbstractExceptions {
+    @RequestLine("")
+    void methodWithInheritedNotAbstractException() throws BaseNotAbstractException;
+  }
+
   public interface TestApiClassWithDuplicateErrorCodeException {
     @RequestLine("")
     void methodWithDuplicateErrorCodeException()
@@ -347,6 +352,42 @@ public class ReflectionErrorDecoderTestClasses {
 
     public MultipleConstructorsWithOnlyThrowableArgumentsException(Throwable cause) {
       super(ERROR_CODE, "", cause);
+    }
+  }
+
+  public static class BaseNotAbstractException extends ServiceException {
+    private static final long serialVersionUID = 1L;
+    public static final String ERROR_CODE = "ABSTRACT CONSIDERED HARMFUL";
+
+    public BaseNotAbstractException(Throwable e) {
+      super(ERROR_CODE, e);
+    }
+
+    protected BaseNotAbstractException(String errorCode, String message) {
+      super(errorCode, message);
+    }
+  }
+
+  public static class ChildOfBaseNotAbstractException extends BaseNotAbstractException {
+    private static final long serialVersionUID = 1L;
+    public static final String ERROR_CODE = "THIS IS PERFECTLY ACCEPTABLE";
+
+    public ChildOfBaseNotAbstractException(String message) {
+      super(ERROR_CODE, message);
+    }
+
+    protected ChildOfBaseNotAbstractException(String errorCode, String message) {
+      super(errorCode, message);
+    }
+  }
+
+  public static class GrandChildOfBaseNotAbstractException extends ChildOfBaseNotAbstractException {
+    private static final long serialVersionUID = 1L;
+    public static final String ERROR_CODE =
+        "THIS IS ARGUABLY A BAD PRACTICE BUT IT SHOULD STILL WORK";
+
+    public GrandChildOfBaseNotAbstractException(String message) {
+      super(ERROR_CODE, message);
     }
   }
 }

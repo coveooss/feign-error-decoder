@@ -173,7 +173,7 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
       throws InstantiationException, IllegalAccessException, InvocationTargetException {
     for (Class<?> clazz : thrownExceptionsClasses) {
       if (baseExceptionClass.isAssignableFrom(clazz)) {
-        if (Modifier.isAbstract(clazz.getModifiers())) {
+        if (!classHierarchySupplier.getSubClasses(clazz, basePackage).isEmpty()) {
           extractExceptionInfoFromSubClasses(classHierarchySupplier, clazz);
         } else {
           extractExceptionInfo((Class<? extends S>) clazz);

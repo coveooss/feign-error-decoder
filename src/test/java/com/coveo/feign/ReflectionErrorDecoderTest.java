@@ -22,6 +22,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.AdditionalNotInterfacedRuntimeException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.AdditionalRuntimeException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.BaseNotAbstractException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.ChildOfBaseNotAbstractException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ConcreteServiceException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ConcreteSubServiceException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ConcreteSubServiceExceptionWithoutInterface;
@@ -32,9 +34,11 @@ import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithStringAndT
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithStringConstructorException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithThrowableConstructorException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.ExceptionWithTwoStringsConstructorException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.GrandChildOfBaseNotAbstractException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.MultipleConstructorsException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.MultipleConstructorsWithOnlyThrowableArgumentsException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithDuplicateErrorCodeException;
+import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithInheritedButNotAbstractExceptions;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithInheritedExceptions;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithNoErrorCodeServiceException;
 import com.coveo.feign.ReflectionErrorDecoderTestClasses.TestApiClassWithPlainExceptions;
@@ -137,6 +141,19 @@ public class ReflectionErrorDecoderTest {
     assertThat(exceptionsThrown.keySet())
         .containsExactly(
             ConcreteServiceException.ERROR_CODE, ConcreteSubServiceException.ERROR_CODE);
+  }
+
+  @Test
+  public void testWithNotAbstractInheritedExceptions() throws Exception {
+    Map<String, ThrownExceptionDetails<ServiceException>> exceptionsThrown =
+        getExceptionsThrownMapFromErrorDecoder(
+            TestApiClassWithInheritedButNotAbstractExceptions.class);
+
+    assertThat(exceptionsThrown.keySet())
+        .containsExactly(
+            BaseNotAbstractException.ERROR_CODE,
+            ChildOfBaseNotAbstractException.ERROR_CODE,
+            GrandChildOfBaseNotAbstractException.ERROR_CODE);
   }
 
   @Test
