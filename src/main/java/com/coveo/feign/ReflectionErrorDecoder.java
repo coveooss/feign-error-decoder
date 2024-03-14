@@ -8,7 +8,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,14 +36,7 @@ import feign.jackson.JacksonDecoder;
 public abstract class ReflectionErrorDecoder<T, S extends Exception> implements ErrorDecoder {
   private static final Logger logger = LoggerFactory.getLogger(ReflectionErrorDecoder.class);
 
-  private static final List<Object> SUPPORTED_CONSTRUCTOR_ARGUMENTS =
-      Arrays.asList(
-          "",
-          new Exception(
-              "Not the real cause, this throwable was only used for instantiation by ReflectionErrorDecoder"),
-          new Error(
-              "Not the real cause, this throwable was only used for instantiation by ReflectionErrorDecoder"));
-
+  private static final List<Object> SUPPORTED_CONSTRUCTOR_ARGUMENTS;
   private static Field detailMessageField;
   private static boolean isSpringWebAvailable = ClassUtils.isSpringWebAvailable();
 
@@ -66,6 +58,14 @@ public abstract class ReflectionErrorDecoder<T, S extends Exception> implements 
           e.getMessage());
       detailMessageField = null;
     }
+
+    String message =
+        "Not the real cause, this throwable was only used for instantiation by ReflectionErrorDecoder.";
+    Exception dummyException = new Exception(message);
+    Error dummyError = new Error(message);
+    Stream.of(dummyError, dummyException)
+        .forEach(throwable -> throwable.setStackTrace(new StackTraceElement[0]));
+    SUPPORTED_CONSTRUCTOR_ARGUMENTS = List.of("", dummyException, dummyError);
   }
 
   protected Class<?> apiClass;
