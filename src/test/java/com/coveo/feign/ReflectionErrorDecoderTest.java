@@ -283,6 +283,23 @@ public class ReflectionErrorDecoderTest {
   }
 
   @Test
+  public void testThrowableArgumentHasNoStackTraceElement() throws Exception {
+    Map<String, ThrownExceptionDetails<ServiceException>> exceptionsThrown =
+        getExceptionsThrownMapFromErrorDecoder(
+            TestApiWithExceptionsWithMultipleConstructorsWithOnlyThrowables.class);
+
+    assertThat(exceptionsThrown.keySet())
+        .containsExactly(MultipleConstructorsWithOnlyThrowableArgumentsException.ERROR_CODE);
+    ThrownExceptionDetails<ServiceException> thrownExceptionDetails =
+        exceptionsThrown.get(MultipleConstructorsWithOnlyThrowableArgumentsException.ERROR_CODE);
+    MultipleConstructorsWithOnlyThrowableArgumentsException exception =
+        (MultipleConstructorsWithOnlyThrowableArgumentsException)
+            thrownExceptionDetails.instantiate();
+    assertThat(exception.getCause()).isNotNull();
+    assertThat(exception.getCause().getStackTrace()).isEmpty();
+  }
+
+  @Test
   public void testBestConstructorIsSelectedWithOnlyThrowablesArgumentConstructors()
       throws Exception {
     Map<String, ThrownExceptionDetails<ServiceException>> exceptionsThrown =

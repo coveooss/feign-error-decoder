@@ -50,9 +50,6 @@ public class CachedSpringClassHierarchySupplier implements ClassHierarchySupplie
 
   @Override
   public Set<Class<?>> getSubClasses(Class<?> clazz, String basePackage) {
-    return subClasses
-        .stream()
-        .filter(subClass -> clazz.isAssignableFrom(subClass))
-        .collect(Collectors.toSet());
+    return subClasses.stream().filter(clazz::isAssignableFrom).collect(Collectors.toSet());
   }
 }
